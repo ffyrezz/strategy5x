@@ -245,6 +245,107 @@ def get_unreflected_trades() -> list[dict[str, Any]]:
     return resp.data or []
 
 
+def update_trade(trade_id: str, updates: dict[str, Any]) -> None:
+    """Update a trade record by id."""
+    get_client().table("trades").update(updates).eq("id", trade_id).execute()
+
+
+def get_trades_since(since_iso: str) -> list[dict[str, Any]]:
+    """Return all trades created since a given ISO timestamp."""
+    resp = (
+        get_client()
+        .table("trades")
+        .select("*")
+        .gte("filled_at", since_iso)
+        .order("filled_at", desc=True)
+        .execute()
+    )
+    return resp.data or []
+
+
+# ── Behavioral metrics ───────────────────────────────────────────────────
+
+
+def insert_behavioral_metric(row: dict[str, Any]) -> dict[str, Any]:
+    """Insert a behavioral metric record."""
+    try:
+        resp = get_client().table("behavioral_metrics").insert(row).execute()
+        return resp.data[0] if resp.data else row
+    except Exception as exc:
+        if "duplicate" in str(exc).lower() or "unique" in str(exc).lower():
+            logger.info("Behavioral metric deduped: %s %s", row.get("metric_type"), row.get("reference_id"))
+            return row
+        raise
+
+
+# ── Scoring runs (bulk) ─────────────────────────────────────────────────
+
+
+def get_scoring_runs_since(since_iso: str) -> list[dict[str, Any]]:
+    """Return all scoring runs created since a given ISO timestamp."""
+    resp = (
+        get_client()
+        .table("scoring_runs")
+        .select("*")
+        .gte("created_at", since_iso)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return resp.data or []
+
+
+# ── Alerts (bulk) ────────────────────────────────────────────────────────
+
+
+def get_alerts_since(since_iso: str) -> list[dict[str, Any]]:
+    """Return all alerts created since a given ISO timestamp."""
+    resp = (
+        get_client()
+        .table("alerts")
+        .select("*")
+        .gte("created_at", since_iso)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return resp.data or []
+
+
+# ── Pipeline candidates (bulk) ───────────────────────────────────────────
+
+
+def get_candidates_since(since_iso: str) -> list[dict[str, Any]]:
+    """Return pipeline candidates updated since a given ISO timestamp."""
+    resp = (
+        get_client()
+        .table("pipeline_candidates")
+        .select("*")
+        .gte("updated_at", since_iso)
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return resp.data or []
+
+
+# ── Positions (bulk update) ──────────────────────────────────────────────
+
+
+def update_position(position_id: str, updates: dict[str, Any]) -> None:
+    """Update a position record by id."""
+    get_client().table("positions").update(updates).eq("id", position_id).execute()
+
+
+def get_all_open_tickers() -> list[str]:
+    """Return list of tickers for all open positions."""
+    resp = (
+        get_client()
+        .table("positions")
+        .select("ticker")
+        .eq("status", "open")
+        .execute()
+    )
+    return [r["ticker"] for r in (resp.data or [])]
+
+
 # ── Rules ─────────────────────────────────────────────────────────────────────
 
 

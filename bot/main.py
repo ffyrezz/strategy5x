@@ -13,10 +13,10 @@ import sys
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 import config
-from bot.handlers import start, status, portfolio, brief, candidate, score, plan, concentration, ack, reflect
+from bot.handlers import start, status, portfolio, brief, candidate, score, plan, concentration, ack, reflect, trade, sync
 
 logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
@@ -41,7 +41,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
     """Register all scheduled jobs with APScheduler."""
-    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker
+    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit
 
     # Morning brief: 8:00 AM SGT (0:00 UTC) weekdays
     scheduler.add_job(
@@ -89,6 +89,15 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
         replace_existing=True,
     )
 
+    # Weekly audit: Sunday 10:00 PM SGT (14:00 UTC)
+    scheduler.add_job(
+        weekly_audit.run,
+        CronTrigger(hour=14, minute=0, day_of_week="sun"),
+        id="weekly_audit",
+        name="Weekly Audit Snapshot",
+        replace_existing=True,
+    )
+
 
 async def post_init(application) -> None:
     """Called after the Application is initialized and the event loop is running."""
@@ -117,6 +126,10 @@ def main() -> None:
     app.add_handler(CommandHandler("concentration", concentration.handle))
     app.add_handler(CommandHandler("ack", ack.handle))
     app.add_handler(CommandHandler("reflect", reflect.handle))
+    app.add_handler(CommandHandler("trade", trade.handle))
+
+    # Document handler for CSV sync
+    app.add_handler(MessageHandler(filters.Document.ALL, sync.handle_document))
 
     # Error handler
     app.add_error_handler(error_handler)

@@ -31,7 +31,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run weekly audit snapshot
-        run: python -m jobs.weekly_audit_snapshot
+        run: python -m jobs.weekly_audit
 
       - name: Notify on failure
         if: failure()
