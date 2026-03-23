@@ -90,13 +90,21 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
     )
 
 
+async def post_init(application) -> None:
+    """Called after the Application is initialized and the event loop is running."""
+    scheduler = AsyncIOScheduler(timezone="UTC")
+    setup_scheduled_jobs(scheduler)
+    scheduler.start()
+    logger.info("Scheduled jobs started")
+
+
 def main() -> None:
     """Start the bot."""
     if not config.TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN not set. Exiting.")
         sys.exit(1)
 
-    app = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
 
     # Register command handlers
     app.add_handler(CommandHandler("start", start.handle))
@@ -112,11 +120,6 @@ def main() -> None:
 
     # Error handler
     app.add_error_handler(error_handler)
-
-    # Set up scheduled jobs
-    scheduler = AsyncIOScheduler(timezone="UTC")
-    setup_scheduled_jobs(scheduler)
-    scheduler.start()
 
     logger.info("Strategy 5.x bot starting...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
