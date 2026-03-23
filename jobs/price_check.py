@@ -9,31 +9,13 @@ from __future__ import annotations
 
 import logging
 
-import httpx
-
 import config
 import db
 from data.market_data import get_price_data
+from utils.telegram_sender import send_message as send_telegram
 from utils.timezone import now_utc
 
 logger = logging.getLogger(__name__)
-
-TELEGRAM_API = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}"
-
-
-async def send_telegram(text: str) -> bool:
-    """Send alert via Telegram."""
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{TELEGRAM_API}/sendMessage",
-            json={
-                "chat_id": config.TELEGRAM_CHAT_ID,
-                "text": text,
-                "disable_web_page_preview": True,
-            },
-            timeout=30,
-        )
-        return resp.status_code == 200
 
 
 async def run() -> None:

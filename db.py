@@ -346,6 +346,100 @@ def get_all_open_tickers() -> list[str]:
     return [r["ticker"] for r in (resp.data or [])]
 
 
+# ── Health check helpers ──────────────────────────────────────────────────────
+
+
+def get_positions_missing_plans(within_days: int = 7) -> list[dict[str, Any]]:
+    """Return positions with catalyst_date within N days but no active plan."""
+    cutoff = (date.today() + timedelta(days=within_days)).isoformat()
+    today = date.today().isoformat()
+    positions = get_active_positions()
+    catalysts = get_upcoming_catalysts(within_days=within_days)
+    catalyst_tickers = {c["ticker"] for c in catalysts}
+
+    missing = []
+    for pos in positions:
+        ticker = pos["ticker"]
+        cat_date = pos.get("catalyst_date")
+        if ticker in catalyst_tickers or (cat_date and today <= str(cat_date) <= cutoff):
+            plan = get_active_plan(ticker)
+            if not plan:
+                missing.append(pos)
+    return missing
+
+
+def get_stale_reflection_count(hours: int = 48) -> int:
+    """Count SELL trades older than N hours without reflection."""
+    cutoff = (now_utc() - timedelta(hours=hours)).isoformat()
+    resp = (
+        get_client()
+        .table("trades")
+        .select("id", count="exact")
+        .eq("side", "SELL")
+        .eq("reflection_completed", False)
+        .lt("filled_at", cutoff)
+        .execute()
+    )
+    return resp.count or 0
+
+
+def get_unacked_alerts_count(hours: int = 24) -> int:
+    """Count alerts > N hours old that are sent but not acknowledged."""
+    cutoff = (now_utc() - timedelta(hours=hours)).isoformat()
+    resp = (
+        get_client()
+        .table("alerts")
+        .select("id", count="exact")
+        .eq("delivery_status", "sent")
+        .eq("action_required", True)
+        .is_("acknowledged_at", "null")
+        .lt("created_at", cutoff)
+        .execute()
+    )
+    return resp.count or 0
+
+
+def get_latest_position_freshness() -> str | None:
+    """Return the most recent source_fresh_at across all open positions."""
+    resp = (
+        get_client()
+        .table("positions")
+        .select("source_fresh_at")
+        .eq("status", "open")
+        .order("source_fresh_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if resp.data:
+        return resp.data[0].get("source_fresh_at")
+    return None
+
+
+def get_all_trades() -> list[dict[str, Any]]:
+    """Return all trades ordered by filled_at."""
+    resp = (
+        get_client()
+        .table("trades")
+        .select("*")
+        .order("filled_at", desc=True)
+        .execute()
+    )
+    return resp.data or []
+
+
+def get_all_table_data(table: str, limit: int = 10000) -> list[dict[str, Any]]:
+    """Return all rows from a table (for export). Use with caution."""
+    resp = (
+        get_client()
+        .table(table)
+        .select("*")
+        .limit(limit)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return resp.data or []
+
+
 # ── Rules ─────────────────────────────────────────────────────────────────────
 
 

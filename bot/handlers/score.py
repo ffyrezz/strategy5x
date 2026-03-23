@@ -13,11 +13,13 @@ from datetime import date
 from telegram import Update
 from telegram.ext import ContextTypes
 
+import config
 import db
 from data.market_data import get_price_data, get_cash_runway_months, get_analyst_targets
 from bot.formatters import format_score_result
 from scoring.engine import run_scoring
 from scoring.da_checks import run_all_checks
+from scoring.ai_dissent import get_ai_dissent, merge_with_deterministic
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +111,24 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if da_result["verdict"] == "BLOCK":
             scoring_result["verdict"] = "block"
             scoring_result["verdict_reason"] = f"DA BLOCK: {da_result.get('highest_severity_check', 'unknown')}"
+
+        # AI Dissent (feature-flagged)
+        if config.AI_DISSENT_ENABLED and config.PERPLEXITY_API_KEY:
+            try:
+                ai_result = await get_ai_dissent(ticker, scoring_result)
+                final_da, dissent_text = merge_with_deterministic(
+                    scoring_result["da_verdict"], ai_result,
+                )
+                scoring_result["da_verdict"] = final_da
+                if dissent_text:
+                    scoring_result["da_dissent_text"] = dissent_text
+                if ai_result.get("ai_enabled") and not ai_result.get("error"):
+                    scoring_result["da_details"]["ai_dissent"] = {
+                        "verdict": ai_result["verdict"],
+                        "key_risks": ai_result["key_risks"],
+                    }
+            except Exception as exc:
+                logger.warning("AI dissent failed for %s (continuing): %s", ticker, exc)
 
         # Remove internal field before DB insert
         axes_detail = scoring_result.pop("_axes_detail", None)

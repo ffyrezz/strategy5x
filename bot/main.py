@@ -16,7 +16,10 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 import config
-from bot.handlers import start, status, portfolio, brief, candidate, score, plan, concentration, ack, reflect, trade, sync
+from bot.handlers import (
+    start, status, portfolio, brief, candidate, score, plan,
+    concentration, ack, reflect, trade, sync, export, checkpoint,
+)
 
 logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
@@ -41,7 +44,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
     """Register all scheduled jobs with APScheduler."""
-    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit
+    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit, canary_check
 
     # Morning brief: 8:00 AM SGT (0:00 UTC) weekdays
     scheduler.add_job(
@@ -98,6 +101,15 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
         replace_existing=True,
     )
 
+    # Canary health check: every 6 hours
+    scheduler.add_job(
+        canary_check.run,
+        CronTrigger(hour="*/6"),
+        id="canary_check",
+        name="Canary Health Check",
+        replace_existing=True,
+    )
+
 
 async def post_init(application) -> None:
     """Called after the Application is initialized and the event loop is running."""
@@ -127,6 +139,8 @@ def main() -> None:
     app.add_handler(CommandHandler("ack", ack.handle))
     app.add_handler(CommandHandler("reflect", reflect.handle))
     app.add_handler(CommandHandler("trade", trade.handle))
+    app.add_handler(CommandHandler("export", export.handle))
+    app.add_handler(CommandHandler("checkpoint", checkpoint.handle))
 
     # Document handler for CSV sync
     app.add_handler(MessageHandler(filters.Document.ALL, sync.handle_document))

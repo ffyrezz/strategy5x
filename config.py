@@ -70,6 +70,12 @@ QUIET_HOURS_START: int = 0   # 00:00 SGT
 QUIET_HOURS_END: int = 6     # 06:00 SGT
 MAX_QUIET_HOUR_LINES: int = 5  # 3 AM design: max 5 lines per message
 
+# ── AI Dissent (feature-flagged) ──────────────────────────────────────────────
+AI_DISSENT_ENABLED: bool = os.environ.get("AI_DISSENT_ENABLED", "false").lower() == "true"
+PERPLEXITY_API_KEY: str = os.environ.get("PERPLEXITY_API_KEY", "")
+AI_DISSENT_MODEL: str = "sonar"
+AI_DISSENT_MAX_MONTHLY_COST_USD: float = 10.0
+
 # ── FDA approval base rates (default lookups) ────────────────────────────────
 FDA_BASE_RATES: dict[str, float] = {
     "NDA": 0.90,
