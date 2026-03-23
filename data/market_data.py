@@ -147,6 +147,62 @@ def get_analyst_targets(ticker: str) -> dict[str, float | None]:
         return {"target_high": None, "target_low": None, "target_mean": None, "current": None}
 
 
+def get_sector_macro_data() -> dict[str, Any]:
+    """
+    Fetch XBI and VIX data for SC8 scoring.
+
+    Returns:
+        {
+            "xbi_price": float | None,
+            "xbi_50dma": float | None,
+            "xbi_20d_return_pct": float | None,
+            "vix": float | None,
+            "provenance": str,
+        }
+    """
+    cache_key = "_sector_macro"
+    if _is_cached(cache_key):
+        return _cache[cache_key][1]
+
+    result: dict[str, Any] = {
+        "xbi_price": None,
+        "xbi_50dma": None,
+        "xbi_20d_return_pct": None,
+        "vix": None,
+        "provenance": FINANCE("yfinance"),
+    }
+
+    try:
+        xbi = yf.Ticker("XBI")
+        hist = xbi.history(period="3mo")
+        if len(hist) >= 50:
+            result["xbi_price"] = float(hist["Close"].iloc[-1])
+            result["xbi_50dma"] = float(hist["Close"].rolling(50).mean().iloc[-1])
+        elif len(hist) >= 20:
+            result["xbi_price"] = float(hist["Close"].iloc[-1])
+
+        if len(hist) >= 20:
+            close_now = float(hist["Close"].iloc[-1])
+            close_20d_ago = float(hist["Close"].iloc[-20])
+            if close_20d_ago > 0:
+                result["xbi_20d_return_pct"] = round(
+                    ((close_now - close_20d_ago) / close_20d_ago) * 100, 2
+                )
+    except Exception as exc:
+        logger.warning("XBI data fetch failed: %s", exc)
+
+    try:
+        vix = yf.Ticker("^VIX")
+        vix_hist = vix.history(period="5d")
+        if len(vix_hist) > 0:
+            result["vix"] = float(vix_hist["Close"].iloc[-1])
+    except Exception as exc:
+        logger.warning("VIX data fetch failed: %s", exc)
+
+    _cache[cache_key] = (time.time(), result)
+    return result
+
+
 def clear_cache() -> None:
     """Clear the price cache."""
     _cache.clear()

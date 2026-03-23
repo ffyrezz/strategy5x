@@ -101,9 +101,54 @@ def score_sc4_stub() -> dict[str, Any]:
     return {"score": None, "method": "hybrid", "components": {"note": "manual_or_ai_required"}}
 
 
-def score_sc8_stub() -> dict[str, Any]:
-    """SC8: Macro/Sector Alignment. Stub — requires AI or manual input."""
-    return {"score": None, "method": "hybrid", "components": {"note": "manual_or_ai_required"}}
+def score_sc8() -> dict[str, Any]:
+    """
+    SC8: Macro/Sector Alignment.
+
+    Uses XBI (biotech ETF) and VIX to gauge sector conditions.
+    Start at 5, +2 if XBI > 50DMA, +1 if XBI 20d return > 5%,
+    -1 if VIX > 25, -2 if XBI 20d return < -8%. Clamp 0-10.
+    """
+    from data.market_data import get_sector_macro_data
+
+    data = get_sector_macro_data()
+    xbi_price = data.get("xbi_price")
+    xbi_50dma = data.get("xbi_50dma")
+    xbi_20d_ret = data.get("xbi_20d_return_pct")
+    vix = data.get("vix")
+
+    # Need at least some data to score
+    if xbi_price is None and vix is None:
+        return {"score": None, "method": "deterministic", "components": data}
+
+    score = 5.0
+
+    if xbi_price is not None and xbi_50dma is not None and xbi_price > xbi_50dma:
+        score += 2
+
+    if xbi_20d_ret is not None and xbi_20d_ret > 5:
+        score += 1
+
+    if vix is not None and vix > 25:
+        score -= 1
+
+    if xbi_20d_ret is not None and xbi_20d_ret < -8:
+        score -= 2
+
+    score = max(0.0, min(10.0, score))
+
+    return {
+        "score": score,
+        "method": "deterministic",
+        "components": {
+            "xbi_price": xbi_price,
+            "xbi_50dma": xbi_50dma,
+            "xbi_20d_return_pct": xbi_20d_ret,
+            "vix": vix,
+            "base": 5,
+            "adjustments": score - 5,
+        },
+    }
 
 
 # ── Composite scoring ────────────────────────────────────────────────────────
@@ -185,7 +230,7 @@ def run_scoring(
         "sc5": score_sc5(cash_runway_months),
         "sc6": score_sc6(adv_30d_usd),
         "sc7": score_sc7(upside_pct, downside_pct),
-        "sc8": {"score": manual_scores.get("sc8"), "method": "hybrid", "components": {"source": "manual"}} if "sc8" in manual_scores else score_sc8_stub(),
+        "sc8": {"score": manual_scores.get("sc8"), "method": "hybrid", "components": {"source": "manual"}} if "sc8" in manual_scores else score_sc8(),
     }
 
     composite, bucket = compute_composite(axes)
