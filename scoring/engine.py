@@ -248,8 +248,8 @@ def run_scoring(
         "verdict_reason": verdict_reason,
         "portfolio_context": {},  # filled by caller
         "run_status": "complete",
-        "input_snapshot_hash": build_input_hash(input_data),
         "idempotency_key": f"{ticker.upper()}_manual_{now_str}",
-        # axes detail for reference
+        "input_data": input_data,
+        # axes detail stored in input_data jsonb
         "_axes_detail": axes,
     }
