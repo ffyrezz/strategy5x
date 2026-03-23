@@ -25,13 +25,30 @@ logger = logging.getLogger(__name__)
 
 
 async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /score TICKER command."""
+    """Handle /score TICKER [sc2=N sc3=N sc4=N] command."""
     args = context.args or []
     if not args:
-        await update.message.reply_text("Usage: /score TICKER")
+        await update.message.reply_text(
+            "Usage: /score TICKER [sc2=7 sc3=9 sc4=8]\n"
+            "Qualitative scores (sc2/sc3/sc4) are optional — pass them from Perplexity research."
+        )
         return
 
     ticker = args[0].upper()
+
+    # Parse optional qualitative scores: sc2=7 sc3=9 sc4=8
+    manual_scores = {}
+    for arg in args[1:]:
+        if "=" in arg:
+            key, val = arg.split("=", 1)
+            key = key.lower().strip()
+            if key in ("sc2", "sc3", "sc4"):
+                try:
+                    score = float(val)
+                    if 0 <= score <= 10:
+                        manual_scores[key] = score
+                except ValueError:
+                    pass
 
     # Check candidate exists
     candidate = db.get_candidate(ticker)
@@ -76,10 +93,19 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             current_price=current,
         )
 
+        # Apply manual qualitative scores from user input (sc2=7 sc3=9 sc4=8)
+        if manual_scores:
+            for axis, score in manual_scores.items():
+                scoring_result[axis] = score
+            # Recompute composite with manual scores
+            composite = sum(scoring_result.get(f"sc{i}", 0) or 0 for i in range(1, 9))
+            scoring_result["composite_score"] = composite
+            scoring_result["scoring_method"] = "hybrid"  # deterministic + manual qualitative
+
         # Get rule version
         rule_version = db.get_current_rule_version()
         scoring_result["rule_version"] = rule_version
-        scoring_result["playbook"] = candidate.get("playbook", "A")
+        scoring_result["playbook"] = candidate.get("playbook") or "A"
         scoring_result["candidate_id"] = candidate.get("id")
 
         # Check for existing position
