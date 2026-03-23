@@ -70,6 +70,13 @@ QUIET_HOURS_START: int = 0   # 00:00 SGT
 QUIET_HOURS_END: int = 6     # 06:00 SGT
 MAX_QUIET_HOUR_LINES: int = 5  # 3 AM design: max 5 lines per message
 
+# ── Moomoo OpenAPI (Phase 2 — live position sync) ────────────────────────────
+MOOMOO_ENABLED: bool = os.environ.get("MOOMOO_ENABLED", "false").lower() == "true"
+MOOMOO_OPEND_HOST: str = os.environ.get("MOOMOO_OPEND_HOST", "127.0.0.1")
+MOOMOO_OPEND_PORT: int = int(os.environ.get("MOOMOO_OPEND_PORT", "11111"))
+MOOMOO_TRADE_ENV: str = os.environ.get("MOOMOO_TRADE_ENV", "REAL")  # REAL or SIMULATE
+MOOMOO_MARKET: str = "US"  # US market only for now
+
 # ── AI Dissent (feature-flagged) ──────────────────────────────────────────────
 AI_DISSENT_ENABLED: bool = os.environ.get("AI_DISSENT_ENABLED", "false").lower() == "true"
 PERPLEXITY_API_KEY: str = os.environ.get("PERPLEXITY_API_KEY", "")
