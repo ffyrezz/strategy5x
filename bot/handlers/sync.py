@@ -33,29 +33,27 @@ def _parse_csv_content(content: str) -> list[dict[str, Any]]:
 
     for row in reader:
         try:
-            ticker = (row.get("Symbol") or row.get("symbol") or "").strip().upper()
+            # Flexible column name matching for Moomoo CSV format
+            def _get(row, *names, default="0"):
+                for n in names:
+                    v = row.get(n)
+                    if v is not None and str(v).strip() not in ("", "--"):
+                        return str(v).strip()
+                return default
+
+            ticker = _get(row, "Symbol", "symbol", default="").upper()
             if not ticker:
                 continue
 
-            qty_raw = row.get("Qty") or row.get("qty") or row.get("Quantity") or "0"
-            qty = float(str(qty_raw).replace(",", ""))
+            qty = float(_get(row, "Quantity", "Qty", "qty").replace(",", ""))
             if qty <= 0:
                 continue
 
-            avg_cost_raw = row.get("Avg Cost") or row.get("avg_cost") or row.get("Average Cost") or "0"
-            avg_cost = float(str(avg_cost_raw).replace(",", "").replace("$", ""))
-
-            last_price_raw = row.get("Last Price") or row.get("last_price") or row.get("Last") or "0"
-            last_price = float(str(last_price_raw).replace(",", "").replace("$", "")) or None
-
-            mv_raw = row.get("Market Value") or row.get("market_value") or "0"
-            market_value = float(str(mv_raw).replace(",", "").replace("$", "")) or None
-
-            pnl_raw = row.get("Unrealized P&L") or row.get("unrealized_pnl") or "0"
-            pnl = float(str(pnl_raw).replace(",", "").replace("$", "")) or None
-
-            pnl_pct_raw = row.get("Unrealized P&L %") or row.get("unrealized_pnl_pct") or "0"
-            pnl_pct_str = str(pnl_pct_raw).replace(",", "").replace("%", "")
+            avg_cost = float(_get(row, "Average Cost", "Avg Cost", "avg_cost").replace(",", "").replace("$", ""))
+            last_price = float(_get(row, "Current price", "Last Price", "last_price", "Last").replace(",", "").replace("$", "")) or None
+            market_value = float(_get(row, "Market Value", "market_value").replace(",", "").replace("$", "")) or None
+            pnl = float(_get(row, "Unrealized P/L", "Unrealized P&L", "unrealized_pnl").replace(",", "").replace("$", "")) or None
+            pnl_pct_str = _get(row, "% Unrealized P/L", "Unrealized P&L %", "unrealized_pnl_pct").replace(",", "").replace("%", "").replace("+", "")
             pnl_pct = float(pnl_pct_str) if pnl_pct_str else None
 
             name = (row.get("Name") or row.get("name") or "").strip() or None
@@ -103,7 +101,8 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     try:
         file = await context.bot.get_file(document.file_id)
         file_bytes = await file.download_as_bytearray()
-        content = file_bytes.decode("utf-8")
+        # Handle BOM encoding from Moomoo CSV exports
+        content = file_bytes.decode("utf-8-sig")
 
         positions = _parse_csv_content(content)
         if not positions:
