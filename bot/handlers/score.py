@@ -107,7 +107,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         # Update verdict based on DA
         if da_result["verdict"] == "BLOCK":
-            scoring_result["verdict"] = "blocked_by_da"
+            scoring_result["verdict"] = "block"
             scoring_result["verdict_reason"] = f"DA BLOCK: {da_result.get('highest_severity_check', 'unknown')}"
 
         # Remove internal field before DB insert

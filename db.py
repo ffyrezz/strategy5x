@@ -328,6 +328,7 @@ def log_error_alert(source: str, error_msg: str) -> None:
                 "action_required": False,
                 "channel": "telegram",
                 "delivery_status": "queued",
+                "delivery_attempts": 0,
                 "dedupe_key": f"system_error_{source}_{now_utc().strftime('%Y%m%d_%H')}",
                 "created_at": now_utc().isoformat(),
             }

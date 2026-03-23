@@ -110,6 +110,7 @@ async def run() -> None:
             "action_required": False,
             "channel": "telegram",
             "delivery_status": "sent" if sent else "failed",
+            "delivery_attempts": 1,
             "sent_at": now_utc().isoformat() if sent else None,
             "dedupe_key": f"morning_brief_{now_utc().strftime('%Y%m%d')}",
             "created_at": now_utc().isoformat(),

@@ -84,7 +84,7 @@ async def run() -> None:
 
                 # Insert alert record
                 alert_row = {
-                    "alert_type": "catalyst_countdown",
+                    "alert_type": "catalyst",
                     "priority": priority,
                     "ticker": ticker,
                     "title": f"{ticker} {cat_type} {countdown}",
@@ -93,6 +93,7 @@ async def run() -> None:
                     "action_required": t_minus <= 3,
                     "channel": "telegram",
                     "delivery_status": "queued",
+                    "delivery_attempts": 0,
                     "dedupe_key": dedupe_key,
                     "created_at": now_utc().isoformat(),
                 }

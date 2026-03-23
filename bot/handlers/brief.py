@@ -70,6 +70,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 "action_required": False,
                 "channel": "telegram",
                 "delivery_status": "sent",
+                "delivery_attempts": 1,
                 "sent_at": now_utc().isoformat(),
                 "dedupe_key": f"morning_brief_{now_utc().strftime('%Y%m%d')}",
                 "created_at": now_utc().isoformat(),

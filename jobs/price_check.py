@@ -95,6 +95,7 @@ async def run() -> None:
                         "action_required": abs(change_pct) >= 15,
                         "channel": "telegram",
                         "delivery_status": "queued",
+                        "delivery_attempts": 0,
                         "dedupe_key": dedupe_key,
                         "created_at": now_utc().isoformat(),
                     }

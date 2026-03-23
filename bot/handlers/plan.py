@@ -65,7 +65,9 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     cat_date = candidate.get("catalyst_date")
-    cat_type = candidate.get("catalyst_type", "event")
+    VALID_CATALYST_TYPES = {"PDUFA", "ADCOM", "PHASE3_READOUT", "PHASE2_READOUT", "REGEN", "EARNINGS", "MACRO", "OTHER"}
+    raw_type = candidate.get("catalyst_type", "OTHER").upper()
+    cat_type = raw_type if raw_type in VALID_CATALYST_TYPES else "OTHER"
 
     if not cat_date:
         await update.message.reply_text(f"Cannot create plan: {ticker} has no catalyst date set.")
@@ -121,13 +123,14 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         return
 
-    # Get position context
+    # Get position context — position_id is NOT NULL in schema
     position = db.get_position_by_ticker(ticker)
     if not position:
         await update.message.reply_text(
-            f"⚠️ No open position for {ticker}. Plan saved but not linked to a position.\n"
-            "Plans are most useful for tickers you hold."
+            f"Cannot create plan: no open position for {ticker}.\n"
+            "Plans require a position. Open a position first, then create a plan."
         )
+        return
 
     # Deactivate old plans for this ticker
     old_plan = db.get_active_plan(ticker)
@@ -142,15 +145,15 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Create new plan
     plan_row = {
         "ticker": ticker,
-        "position_id": position["id"] if position else None,
+        "position_id": position["id"],
         "candidate_id": candidate.get("id"),
         "catalyst_date": str(cat_date),
         "catalyst_type": cat_type,
         "if_approval": {"action": bull},
         "if_rejection": {"action": bear},
         "if_mixed": {"action": mixed},
-        "position_size_at_plan": float(position.get("quantity", 0)) if position else 0,
-        "entry_price_at_plan": float(position.get("avg_cost", 0)) if position else 0,
+        "position_size_at_plan": float(position.get("quantity", 0)),
+        "entry_price_at_plan": float(position.get("avg_cost", 0)),
         "is_active": True,
         "created_at": now_utc().isoformat(),
     }

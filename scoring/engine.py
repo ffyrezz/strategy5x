@@ -146,7 +146,7 @@ def compute_verdict(composite: float | None, bucket: str) -> tuple[str, str]:
     Returns (verdict, verdict_reason).
     """
     if composite is None:
-        return "incomplete", "Insufficient data for scoring"
+        return "monitor", "Insufficient data for full scoring"
     if composite >= config.MIN_ENTRY_SCORE:
         return "entry_ready", f"Composite {composite}, bucket {bucket}"
     return "watch", f"Composite {composite} below entry threshold {config.MIN_ENTRY_SCORE}"
@@ -223,7 +223,6 @@ def run_scoring(
         "ticker": ticker.upper(),
         "run_type": "manual",
         "strategy_version": config.STRATEGY_VERSION,
-        "scoring_version": config.SCORING_VERSION,
         "rule_version": 1,  # will be overridden by caller with actual version
         "playbook": "A",     # default; overridden by caller
         "input_data": input_data,
@@ -240,7 +239,7 @@ def run_scoring(
         "scoring_method": scoring_method,
         "data_sources": data_sources,
         "bear_summary": "Deterministic DA checks pending",  # NOT NULL — filled by DA
-        "da_verdict": "PENDING",
+        "da_verdict": "PROCEED",
         "da_details": {},
         "da_override": False,
         "invalidation_conditions": [],
@@ -249,7 +248,6 @@ def run_scoring(
         "portfolio_context": {},  # filled by caller
         "run_status": "complete",
         "idempotency_key": f"{ticker.upper()}_manual_{now_str}",
-        "input_data": input_data,
         # axes detail stored in input_data jsonb
         "_axes_detail": axes,
     }
