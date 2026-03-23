@@ -1,0 +1,7 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+startCommand = "python -m bot.main"
+healthcheckPath = "/"
+restartPolicyType = "on_failure"
