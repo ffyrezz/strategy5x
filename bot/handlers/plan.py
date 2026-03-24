@@ -70,8 +70,20 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     cat_type = raw_type if raw_type in VALID_CATALYST_TYPES else "OTHER"
 
     if not cat_date:
-        await update.message.reply_text(f"Cannot create plan: {ticker} has no catalyst date set.")
-        return
+        # Allow plan creation with a placeholder date for "any day" catalysts
+        # Use end of current month as outer bound
+        from datetime import date
+        today = date.today()
+        if today.month == 12:
+            cat_date = date(today.year + 1, 1, 31)
+        else:
+            import calendar
+            last_day = calendar.monthrange(today.year, today.month)[1]
+            cat_date = date(today.year, today.month, last_day)
+        await update.message.reply_text(
+            f"⚠️ {ticker} has no confirmed catalyst date. Using {cat_date} as outer bound.\n"
+            f"Update with: /candidate {ticker} catalyst=TYPE date=YYYY-MM-DD"
+        )
 
     # VIEW mode — no plan args provided
     if not kwargs:
