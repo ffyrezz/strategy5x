@@ -44,7 +44,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
     """Register all scheduled jobs with APScheduler."""
-    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit, canary_check
+    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit, canary_check, profit_defense, weekly_triage
 
     # Morning brief: 8:00 AM SGT (0:00 UTC) weekdays
     scheduler.add_job(
@@ -107,6 +107,24 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
         CronTrigger(hour="*/6"),
         id="canary_check",
         name="Canary Health Check",
+        replace_existing=True,
+    )
+
+    # Profit defense: every hour during US market hours
+    scheduler.add_job(
+        profit_defense.run,
+        CronTrigger(minute=30, hour="13-23,0-4", day_of_week="mon-fri"),  # UTC
+        id="profit_defense",
+        name="Profit Defense Check",
+        replace_existing=True,
+    )
+
+    # Weekly triage: Sunday 10:00 PM SGT (14:00 UTC)
+    scheduler.add_job(
+        weekly_triage.run,
+        CronTrigger(hour=14, minute=0, day_of_week="sun"),
+        id="weekly_triage",
+        name="Weekly Position Triage",
         replace_existing=True,
     )
 

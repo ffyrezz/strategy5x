@@ -99,6 +99,45 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     # CREATE mode
+
+    # ── Concentration gate (v2.0) ──
+    positions = db.get_active_positions()
+    MAX_OPEN_POSITIONS = 5
+    if len(positions) >= MAX_OPEN_POSITIONS:
+        position_tickers = [p["ticker"] for p in positions]
+        if kwargs.get("override", "").lower() != "true":
+            await update.message.reply_text(
+                f"CONCENTRATION BLOCK: You have {len(positions)} open positions (max {MAX_OPEN_POSITIONS}).\n"
+                f"Current: {', '.join(position_tickers)}\n\n"
+                f"Exit a position first (/trade TICKER SELL qty price), then retry.\n"
+                f"To override: /candidate {ticker} {' '.join(f'{k}={v}' for k, v in kwargs.items())} override=true"
+            )
+            return
+        else:
+            await update.message.reply_text(
+                f"Override accepted. Logging: CONCENTRATION_OVERRIDE for {ticker} at {len(positions)} positions."
+            )
+            # Log the override as a behavioral metric
+            try:
+                import uuid
+                db.insert_behavioral_metric({
+                    "metric_type": "da_override",
+                    "reference_type": "alert",
+                    "reference_id": str(uuid.uuid4()),
+                    "metric_value": len(positions),
+                    "metric_unit": "count",
+                    "context": {
+                        "type": "concentration_override",
+                        "ticker": ticker,
+                        "open_positions": len(positions),
+                        "position_tickers": position_tickers,
+                    },
+                    "observed_at": now_utc().isoformat(),
+                    "created_at": now_utc().isoformat(),
+                })
+            except Exception:
+                pass  # Best-effort logging
+
     # Fuzzy-match catalyst types to valid DB values
     CATALYST_MAP = {
         "PDUFA": "PDUFA", "ADCOM": "ADCOM",
