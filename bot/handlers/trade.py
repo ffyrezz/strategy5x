@@ -70,6 +70,26 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     fill_value = round(quantity * fill_price, 2)
 
+    # ── Concentration gate (v2.1) — blocks new BUY if at capacity ──
+    MAX_OPEN_POSITIONS = 5
+    if side == "BUY":
+        positions = db.get_active_positions()
+        existing_position = any(p["ticker"] == ticker for p in positions)
+        # Only block if this is a NEW position (not adding to existing)
+        if not existing_position and len(positions) >= MAX_OPEN_POSITIONS:
+            position_tickers = [p["ticker"] for p in positions]
+            # Check for override
+            has_override = any(a.startswith("override=") and a.split("=", 1)[1].lower() == "true" for a in args[4:])
+            if not has_override:
+                await update.message.reply_text(
+                    f"CONCENTRATION BLOCK: You have {len(positions)} open positions (max {MAX_OPEN_POSITIONS}).\n"
+                    f"Current: {', '.join(position_tickers)}\n\n"
+                    f"{ticker} is not an existing position — this would be position #{len(positions)+1}.\n"
+                    f"Exit a position first, then retry.\n"
+                    f"To override: add override=true to the command"
+                )
+                return
+
     # Look up related records
     position = db.get_position_by_ticker(ticker)
     scoring_run = db.get_latest_scoring_run(ticker)

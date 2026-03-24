@@ -100,43 +100,20 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # CREATE mode
 
-    # ── Concentration gate (v2.0) ──
+    # ── Concentration awareness (v2.1) ──
+    # Pipeline logging is always allowed — you need to track candidates early.
+    # The concentration gate fires as a WARNING here, not a block.
+    # The actual BLOCK lives in /trade (deployment stage).
     positions = db.get_active_positions()
     MAX_OPEN_POSITIONS = 5
+    concentration_warning = ""
     if len(positions) >= MAX_OPEN_POSITIONS:
         position_tickers = [p["ticker"] for p in positions]
-        if kwargs.get("override", "").lower() != "true":
-            await update.message.reply_text(
-                f"CONCENTRATION BLOCK: You have {len(positions)} open positions (max {MAX_OPEN_POSITIONS}).\n"
-                f"Current: {', '.join(position_tickers)}\n\n"
-                f"Exit a position first (/trade TICKER SELL qty price), then retry.\n"
-                f"To override: /candidate {ticker} {' '.join(f'{k}={v}' for k, v in kwargs.items())} override=true"
-            )
-            return
-        else:
-            await update.message.reply_text(
-                f"Override accepted. Logging: CONCENTRATION_OVERRIDE for {ticker} at {len(positions)} positions."
-            )
-            # Log the override as a behavioral metric
-            try:
-                import uuid
-                db.insert_behavioral_metric({
-                    "metric_type": "da_override",
-                    "reference_type": "alert",
-                    "reference_id": str(uuid.uuid4()),
-                    "metric_value": len(positions),
-                    "metric_unit": "count",
-                    "context": {
-                        "type": "concentration_override",
-                        "ticker": ticker,
-                        "open_positions": len(positions),
-                        "position_tickers": position_tickers,
-                    },
-                    "observed_at": now_utc().isoformat(),
-                    "created_at": now_utc().isoformat(),
-                })
-            except Exception:
-                pass  # Best-effort logging
+        concentration_warning = (
+            f"\nNote: You have {len(positions)} open positions (max {MAX_OPEN_POSITIONS} for deployment).\n"
+            f"Current: {', '.join(position_tickers)}\n"
+            f"Pipeline logging OK. Deployment will be blocked until you exit a position."
+        )
 
     # Fuzzy-match catalyst types to valid DB values
     CATALYST_MAP = {
@@ -208,6 +185,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"Catalyst: {catalyst_type} on {catalyst_date_str or 'TBD'} {countdown}\n"
             f"Price at discovery: ${price_data['price']:.2f}\n"
             f"Next: /score {ticker}"
+            f"{concentration_warning}"
         )
     except Exception as exc:
         logger.error("Failed to create candidate: %s", exc)
