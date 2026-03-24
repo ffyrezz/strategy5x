@@ -508,6 +508,73 @@ def keepalive_ping() -> bool:
         return False
 
 
+# ── Decision audit trail ─────────────────────────────────────────────────────
+
+
+def log_decision(
+    event_type: str,
+    ticker: str,
+    source: str,
+    advice_summary: str,
+    advice_action: str | None = None,
+    advice_detail: dict | None = None,
+    position_id: str | None = None,
+    scoring_run_id: str | None = None,
+    plan_id: str | None = None,
+    trade_id: str | None = None,
+    alert_id: str | None = None,
+    price_at_event: float | None = None,
+    user_response: str = "pending",
+) -> dict | None:
+    """Log a decision event to the audit trail. Best-effort; never raises."""
+    try:
+        row = {
+            "event_type": event_type,
+            "ticker": ticker.upper(),
+            "source": source,
+            "advice_summary": advice_summary[:500],
+            "advice_action": advice_action,
+            "advice_detail": advice_detail or {},
+            "position_id": position_id,
+            "scoring_run_id": scoring_run_id,
+            "plan_id": plan_id,
+            "trade_id": trade_id,
+            "alert_id": alert_id,
+            "price_at_event": price_at_event,
+            "user_response": user_response,
+            "created_at": now_utc().isoformat(),
+            "updated_at": now_utc().isoformat(),
+        }
+        resp = get_client().table("decision_log").insert(row).execute()
+        return resp.data[0] if resp.data else None
+    except Exception:
+        logger.debug("Failed to log decision for %s: %s", ticker, event_type, exc_info=True)
+        return None
+
+
+def update_decision(decision_id: str, updates: dict) -> None:
+    """Update a decision log entry (e.g., grade outcome or record user response)."""
+    try:
+        updates["updated_at"] = now_utc().isoformat()
+        get_client().table("decision_log").update(updates).eq("id", decision_id).execute()
+    except Exception:
+        logger.debug("Failed to update decision %s", decision_id, exc_info=True)
+
+
+def get_decisions(ticker: str | None = None, event_type: str | None = None, limit: int = 50) -> list:
+    """Fetch recent decision log entries."""
+    try:
+        q = get_client().table("decision_log").select("*").order("created_at", desc=True).limit(limit)
+        if ticker:
+            q = q.eq("ticker", ticker.upper())
+        if event_type:
+            q = q.eq("event_type", event_type)
+        resp = q.execute()
+        return resp.data or []
+    except Exception:
+        return []
+
+
 # ── Error logging helper ─────────────────────────────────────────────────────
 
 

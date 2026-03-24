@@ -88,6 +88,15 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     f"Exit a position first, then retry.\n"
                     f"To override: add override=true to the command"
                 )
+                db.log_decision(
+                    event_type="concentration_block",
+                    ticker=ticker,
+                    source="concentration_gate",
+                    advice_summary=f"Blocked new BUY for {ticker} — {len(positions)} positions (max {MAX_OPEN_POSITIONS})",
+                    advice_action="block",
+                    price_at_event=fill_price,
+                    user_response="pending",
+                )
                 return
 
     # Look up related records
@@ -124,6 +133,20 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     try:
         saved = db.insert_trade(trade_row)
+
+        db.log_decision(
+            event_type="user_action",
+            ticker=ticker,
+            source="trade_handler",
+            advice_summary=f"Logged {side} {quantity:.0f} {ticker} @ ${fill_price:.2f}",
+            advice_action="buy" if side == "BUY" else "sell",
+            trade_id=saved.get("id"),
+            position_id=position.get("id") if position else None,
+            scoring_run_id=scoring_run.get("id") if scoring_run else None,
+            plan_id=plan.get("id") if plan else None,
+            price_at_event=fill_price,
+            user_response="followed" if plan else "no_response_required",
+        )
 
         lines = [
             f"Trade logged: {side} {quantity:.0f} {ticker} @ ${fill_price:.2f}",

@@ -171,7 +171,19 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     }
 
     try:
-        db.insert_plan(plan_row)
+        saved_plan = db.insert_plan(plan_row)
+
+        db.log_decision(
+            event_type="plan_created",
+            ticker=ticker,
+            source="plan",
+            advice_summary=f"{ticker} plan: bull={bull}, bear={bear}, mixed={mixed}",
+            advice_action="no_action",
+            plan_id=saved_plan.get("id"),
+            position_id=position.get("id"),
+            price_at_event=float(position.get("last_price") or position.get("avg_cost") or 0) or None,
+            user_response="no_response_required",
+        )
 
         days = days_until_catalyst(cat_date)
         countdown = format_countdown(days)

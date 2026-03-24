@@ -165,6 +165,16 @@ async def run() -> None:
                                         "sent_at": now_utc().isoformat(),
                                     })
                                     logger.info("Profit defense alert sent: %s +%.1f%%", ticker, gain_pct)
+                                db.log_decision(
+                                    event_type="trim_alert",
+                                    ticker=ticker,
+                                    source="profit_defense",
+                                    advice_summary=message[:500],
+                                    advice_action="trim",
+                                    position_id=pos.get("id"),
+                                    alert_id=saved.get("id"),
+                                    price_at_event=last_price,
+                                )
                             except Exception:
                                 logger.debug("Profit defense deduped: %s", dedupe_key)
                             break  # Only alert at highest threshold
@@ -211,6 +221,16 @@ async def run() -> None:
                                         "sent_at": now_utc().isoformat(),
                                     })
                                     logger.info("Stop-loss alert sent: %s %.1f%%", ticker, gain_pct)
+                                db.log_decision(
+                                    event_type="stop_alert",
+                                    ticker=ticker,
+                                    source="profit_defense",
+                                    advice_summary=message[:500],
+                                    advice_action="exit_all",
+                                    position_id=pos.get("id"),
+                                    alert_id=saved.get("id"),
+                                    price_at_event=last_price,
+                                )
                             except Exception:
                                 logger.debug("Stop-loss deduped: %s", dedupe_key)
                             break  # Only alert at worst threshold

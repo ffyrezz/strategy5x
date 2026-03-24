@@ -95,6 +95,17 @@ async def run() -> None:
                         "sent_at": now_utc().isoformat(),
                     })
                     logger.info("Sent catalyst alert: %s %s", ticker, countdown)
+                    db.log_decision(
+                        event_type="catalyst_alert",
+                        ticker=ticker,
+                        source="catalyst_alerts",
+                        advice_summary=f"{ticker} {cat_type} {countdown}",
+                        advice_action="no_action",
+                        alert_id=saved_alert.get("id"),
+                        position_id=position.get("id") if position else None,
+                        plan_id=plan.get("id") if plan else None,
+                        user_response="pending" if t_minus <= 3 else "no_response_required",
+                    )
                 else:
                     logger.error("Failed to send catalyst alert: %s", ticker)
 

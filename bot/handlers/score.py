@@ -162,6 +162,21 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Save to database
         saved = db.insert_scoring_run(scoring_result)
 
+        # Log decision
+        _verdict_to_action = {"entry_ready": "buy", "watch": "watch", "monitor": "hold", "block": "block"}
+        db.log_decision(
+            event_type="score_completed",
+            ticker=ticker,
+            source="score",
+            advice_summary=f"{ticker} scored {scoring_result.get('composite_score', '?')}/80 — verdict: {scoring_result.get('verdict', '?')}, DA: {scoring_result.get('da_verdict', '?')}",
+            advice_action=_verdict_to_action.get(scoring_result.get("verdict", ""), "watch"),
+            advice_detail={"composite": scoring_result.get("composite_score"), "da_verdict": scoring_result.get("da_verdict")},
+            scoring_run_id=saved.get("id"),
+            position_id=scoring_result.get("position_id"),
+            price_at_event=current,
+            user_response="pending",
+        )
+
         # Update candidate with latest score
         update_fields = {
             "latest_scoring_run_id": saved.get("id"),

@@ -121,6 +121,18 @@ async def run() -> None:
                                 "sent_at": now_utc().isoformat(),
                             })
                             logger.info("Price alert sent: %s %+.1f%%", ticker, change_pct)
+                            _evt = "exit_signal" if change_pct < 0 and abs(change_pct) >= 15 else "hold_signal"
+                            _act = "exit_all" if _evt == "exit_signal" else "hold"
+                            db.log_decision(
+                                event_type=_evt,
+                                ticker=ticker,
+                                source="price_check",
+                                advice_summary=message[:500],
+                                advice_action=_act,
+                                position_id=pos.get("id"),
+                                alert_id=saved.get("id"),
+                                price_at_event=current,
+                            )
                     except Exception:
                         # Deduped — already alerted today
                         logger.debug("Price alert insert deduped: %s", dedupe_key)

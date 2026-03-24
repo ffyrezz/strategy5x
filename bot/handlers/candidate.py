@@ -178,6 +178,15 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     try:
         db.upsert_candidate(row)
+        db.log_decision(
+            event_type="radar_surfaced",
+            ticker=ticker,
+            source="user_manual",
+            advice_summary=f"{ticker} added to pipeline. Catalyst: {catalyst_type} on {catalyst_date_str or 'TBD'}",
+            advice_action="watch",
+            price_at_event=price_data["price"],
+            user_response="no_response_required",
+        )
         days = days_until_catalyst(catalyst_date_val)
         countdown = format_countdown(days) if days is not None else ""
         await update.message.reply_text(

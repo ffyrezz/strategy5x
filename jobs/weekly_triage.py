@@ -181,8 +181,26 @@ async def run() -> None:
                 greens.append((ticker, detail))
             elif flag == "AMBER":
                 ambers.append((ticker, detail))
+                db.log_decision(
+                    event_type="triage_flag",
+                    ticker=ticker,
+                    source="weekly_triage",
+                    advice_summary=f"AMBER: {detail}",
+                    advice_action="hold",
+                    position_id=pos.get("id"),
+                    price_at_event=last_price if last_price else None,
+                )
             else:
                 reds.append((ticker, detail))
+                db.log_decision(
+                    event_type="triage_flag",
+                    ticker=ticker,
+                    source="weekly_triage",
+                    advice_summary=f"RED: {detail}",
+                    advice_action="exit_all",
+                    position_id=pos.get("id"),
+                    price_at_event=last_price if last_price else None,
+                )
 
         message = _format_triage_message(greens, ambers, reds, total_mv, total_pnl)
 

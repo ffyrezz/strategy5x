@@ -662,6 +662,253 @@ tbody tr.clickable-row { cursor: pointer; }
   letter-spacing: 0.03em;
 }
 
+/* ===== Decision Audit Badges ===== */
+.badge-followed { background: var(--green-bg); color: var(--green); }
+.badge-ignored { background: var(--red-bg); color: var(--red); }
+.badge-overrode { background: var(--orange-bg); color: var(--orange); }
+.badge-pending { background: rgba(255,255,255,0.04); color: var(--text-muted); }
+.badge-partially { background: var(--orange-bg); color: var(--orange); }
+.badge-correct { background: var(--green-bg); color: var(--green); }
+.badge-wrong { background: var(--red-bg); color: var(--red); }
+.badge-neutral { background: rgba(255,255,255,0.04); color: var(--text-muted); }
+
+.badge-action-buy { background: var(--green-bg); color: var(--green); font-weight: 600; }
+.badge-action-sell { background: var(--red-bg); color: var(--red); font-weight: 600; }
+.badge-action-trim { background: var(--orange-bg); color: var(--orange); font-weight: 600; }
+.badge-action-hold { background: rgba(255,255,255,0.04); color: var(--text-secondary); font-weight: 600; }
+.badge-action-block { background: var(--red-bg); color: var(--red); font-weight: 600; }
+.badge-action-watch { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+
+.badge-event-entry, .badge-event-buy, .badge-event-entry_signal { background: var(--green-bg); color: var(--green); }
+.badge-event-exit, .badge-event-stop, .badge-event-stop_loss { background: var(--red-bg); color: var(--red); }
+.badge-event-trim { background: var(--orange-bg); color: var(--orange); }
+.badge-event-score, .badge-event-plan, .badge-event-scoring_run, .badge-event-plan_created { background: rgba(94,170,160,0.12); color: var(--accent); }
+.badge-event-watch, .badge-event-hold, .badge-event-triage, .badge-event-alert { background: rgba(255,255,255,0.04); color: var(--text-secondary); }
+.badge-event-trade, .badge-event-trade_executed { background: var(--accent-dim); color: var(--accent); }
+.badge-event-block, .badge-event-block_triggered { background: var(--red-bg); color: var(--red); }
+.badge-event-user_action { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+
+/* ===== Decision Timeline ===== */
+.decision-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.decision-filters input,
+.decision-filters select {
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-text);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.decision-filters input:focus,
+.decision-filters select:focus {
+  border-color: var(--accent);
+}
+
+.decision-filters input::placeholder {
+  color: var(--text-muted);
+}
+
+.decision-filters select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235f6368' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.timeline-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline-entry {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 0;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-left: 3px solid var(--border-subtle);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  transition: background 0.15s;
+}
+
+.timeline-entry:hover {
+  background: var(--bg-surface-hover);
+}
+
+.timeline-entry.event-entry,
+.timeline-entry.event-buy,
+.timeline-entry.event-entry_signal { border-left-color: var(--green); }
+.timeline-entry.event-exit,
+.timeline-entry.event-stop,
+.timeline-entry.event-stop_loss { border-left-color: var(--red); }
+.timeline-entry.event-trim { border-left-color: var(--orange); }
+.timeline-entry.event-score,
+.timeline-entry.event-plan,
+.timeline-entry.event-scoring_run,
+.timeline-entry.event-plan_created { border-left-color: var(--accent); }
+.timeline-entry.event-trade,
+.timeline-entry.event-trade_executed { border-left-color: var(--accent); }
+.timeline-entry.event-block,
+.timeline-entry.event-block_triggered { border-left-color: var(--red); }
+.timeline-entry.event-watch,
+.timeline-entry.event-hold,
+.timeline-entry.event-triage,
+.timeline-entry.event-alert,
+.timeline-entry.event-user_action { border-left-color: var(--text-muted); }
+
+.timeline-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-top: 1px;
+  white-space: nowrap;
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeline-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.timeline-ticker {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.timeline-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.timeline-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.timeline-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ===== Decision Pattern Cards ===== */
+.decision-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .decision-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.accuracy-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.accuracy-table th {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.accuracy-table th:nth-child(n+2) { text-align: right; }
+
+.accuracy-table td {
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.accuracy-table td:first-child {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.accuracy-table td:nth-child(n+2) {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.ignored-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ignored-item {
+  padding: 10px 12px;
+  background: var(--bg-surface-raised);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--red);
+}
+
+.ignored-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ignored-item-ticker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ignored-item-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.ignored-item-outcome {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
 /* ===== Side Badges ===== */
 .side-buy { background: rgba(52,168,83,0.06); }
 .side-sell { background: rgba(234,67,53,0.06); }
@@ -1268,6 +1515,10 @@ tbody tr.clickable-row { cursor: pointer; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
         Trades
       </div>
+      <div class="nav-item" data-page="decisions" onclick="switchPage('decisions')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+        Decision Audit
+      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -1523,6 +1774,97 @@ tbody tr.clickable-row { cursor: pointer; }
       </div>
     </div>
 
+    <!-- ======== DECISION AUDIT PAGE ======== -->
+    <div class="page" id="page-decisions">
+
+      <!-- Section A: Accuracy KPIs -->
+      <div class="kpi-grid" id="decisionKpis">
+        <div class="kpi-card">
+          <div class="kpi-label">Advice Accuracy</div>
+          <div class="kpi-value" id="kpi-advice-accuracy">--</div>
+          <div class="kpi-sub">correct + partially correct / graded</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Follow Rate</div>
+          <div class="kpi-value" id="kpi-follow-rate">--</div>
+          <div class="kpi-sub">decisions followed</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Override Rate</div>
+          <div class="kpi-value" id="kpi-override-rate">--</div>
+          <div class="kpi-sub">decisions overridden</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pending Grade</div>
+          <div class="kpi-value" id="kpi-pending-grade">--</div>
+          <div class="kpi-sub">awaiting outcome</div>
+        </div>
+      </div>
+
+      <!-- Section B: Decision Timeline -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Decision Timeline</span>
+          <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);" id="decisionCount">--</span>
+        </div>
+
+        <div class="decision-filters">
+          <input type="text" id="decisionTickerSearch" placeholder="Search ticker..." oninput="renderDecisionTimeline()">
+          <select id="decisionEventFilter" onchange="renderDecisionTimeline()">
+            <option value="all">All Events</option>
+            <option value="scores">Scores</option>
+            <option value="trades">Trades</option>
+            <option value="alerts">Alerts</option>
+            <option value="triage">Triage</option>
+            <option value="blocks">Blocks</option>
+          </select>
+          <select id="decisionResponseFilter" onchange="renderDecisionTimeline()">
+            <option value="all">All Responses</option>
+            <option value="followed">Followed</option>
+            <option value="ignored">Ignored</option>
+            <option value="overrode">Overrode</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+
+        <div class="timeline-feed" id="decisionTimeline">
+          <div class="timeline-empty">Loading decisions...</div>
+        </div>
+      </div>
+
+      <!-- Section C: Pattern Analysis Cards -->
+      <div class="decision-bottom-grid">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">System Accuracy by Event Type</span>
+          </div>
+          <table class="accuracy-table" id="accuracyByEventTable">
+            <thead>
+              <tr>
+                <th>Event Type</th>
+                <th>Total</th>
+                <th>Graded</th>
+                <th>Accuracy</th>
+              </tr>
+            </thead>
+            <tbody id="accuracyByEventBody">
+              <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Ignored Advice Outcomes</span>
+          </div>
+          <div class="ignored-list" id="ignoredAdviceList">
+            <div class="timeline-empty">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </main>
 </div>
 
@@ -1563,6 +1905,7 @@ const SUPABASE_KEY = 'sb_publishable_BXs2RuXZllk-8ZZp6tpWBQ_UmdcMP0k';
 let allPipelineCandidates = [];
 let allScoringRuns = [];
 let allTrades = [];
+let allDecisions = [];
 let allPositions = [];
 let currentPipelineFilter = 'all';
 let allocationChartInstance = null;
@@ -1695,7 +2038,8 @@ function switchPage(page) {
     pipeline: 'Pipeline',
     scoring: 'Scoring Log',
     alerts: 'Alerts',
-    trades: 'Trades'
+    trades: 'Trades',
+    decisions: 'Decision Audit'
   };
   document.getElementById('pageTitle').textContent = titles[page] || page;
   document.getElementById('mainContent').scrollTop = 0;
@@ -2557,6 +2901,229 @@ async function loadTrades() {
   }).join('');
 }
 
+// ===== Decision Audit =====
+async function loadDecisions() {
+  allDecisions = await query('decision_log', 'order=created_at.desc&limit=200');
+  renderDecisionKpis();
+  renderDecisionTimeline();
+  renderAccuracyByEvent();
+  renderIgnoredAdvice();
+}
+
+function renderDecisionKpis() {
+  const d = allDecisions;
+
+  // Advice Accuracy: % of graded decisions where outcome_grade = 'correct' or 'partially_correct'
+  const graded = d.filter(x => x.outcome_grade && x.outcome_grade !== 'ungraded' && x.outcome_grade !== 'neutral');
+  const correct = graded.filter(x => x.outcome_grade === 'correct' || x.outcome_grade === 'partially_correct');
+  const accuracyPct = graded.length > 0 ? (correct.length / graded.length * 100) : 0;
+  const accEl = document.getElementById('kpi-advice-accuracy');
+  accEl.textContent = graded.length > 0 ? accuracyPct.toFixed(1) + '%' : '--';
+  if (graded.length > 0) accEl.style.color = accuracyPct >= 60 ? 'var(--green)' : accuracyPct >= 40 ? 'var(--orange)' : 'var(--red)';
+
+  // Follow Rate: % where user_response = 'followed'
+  const respondable = d.filter(x => x.user_response && x.user_response !== 'no_response_required');
+  const followed = respondable.filter(x => x.user_response === 'followed');
+  const followPct = respondable.length > 0 ? (followed.length / respondable.length * 100) : 0;
+  const followEl = document.getElementById('kpi-follow-rate');
+  followEl.textContent = respondable.length > 0 ? followPct.toFixed(1) + '%' : '--';
+
+  // Override Rate: % where user_response = 'overrode'
+  const overrode = respondable.filter(x => x.user_response === 'overrode');
+  const overridePct = respondable.length > 0 ? (overrode.length / respondable.length * 100) : 0;
+  const overrideEl = document.getElementById('kpi-override-rate');
+  overrideEl.textContent = respondable.length > 0 ? overridePct.toFixed(1) + '%' : '--';
+  if (respondable.length > 0) overrideEl.style.color = overridePct > 30 ? 'var(--orange)' : 'var(--text-primary)';
+
+  // Pending Grade: count where outcome_grade = 'ungraded' and event_type != 'user_action'
+  const pending = d.filter(x => x.outcome_grade === 'ungraded' && x.event_type !== 'user_action');
+  document.getElementById('kpi-pending-grade').textContent = pending.length;
+}
+
+function getEventFilterGroup(eventType) {
+  if (!eventType) return 'other';
+  const t = eventType.toLowerCase();
+  if (t.includes('scor') || t.includes('plan')) return 'scores';
+  if (t.includes('trade') || t.includes('buy') || t.includes('sell') || t.includes('entry') || t.includes('exit') || t.includes('trim')) return 'trades';
+  if (t.includes('alert') || t.includes('stop')) return 'alerts';
+  if (t.includes('triage') || t.includes('watch') || t.includes('hold')) return 'triage';
+  if (t.includes('block')) return 'blocks';
+  return 'other';
+}
+
+function fmtRelativeTime(d) {
+  if (!d) return '--';
+  const dt = new Date(d);
+  const now = Date.now();
+  const diff = now - dt.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return mins + 'm ago';
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days < 7) return days + 'd ago';
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function renderDecisionTimeline() {
+  const tickerSearch = (document.getElementById('decisionTickerSearch').value || '').toUpperCase().trim();
+  const eventFilter = document.getElementById('decisionEventFilter').value;
+  const responseFilter = document.getElementById('decisionResponseFilter').value;
+
+  let filtered = allDecisions;
+
+  if (tickerSearch) {
+    filtered = filtered.filter(x => (x.ticker || '').toUpperCase().includes(tickerSearch));
+  }
+
+  if (eventFilter !== 'all') {
+    filtered = filtered.filter(x => getEventFilterGroup(x.event_type) === eventFilter);
+  }
+
+  if (responseFilter !== 'all') {
+    filtered = filtered.filter(x => {
+      const r = (x.user_response || '').toLowerCase();
+      if (responseFilter === 'followed') return r === 'followed';
+      if (responseFilter === 'ignored') return r === 'ignored';
+      if (responseFilter === 'overrode') return r === 'overrode';
+      if (responseFilter === 'pending') return r === 'pending' || r === '';
+      return true;
+    });
+  }
+
+  document.getElementById('decisionCount').textContent = filtered.length + ' event' + (filtered.length !== 1 ? 's' : '');
+
+  const container = document.getElementById('decisionTimeline');
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="timeline-empty">No decision events match filters</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(d => {
+    const eventType = (d.event_type || 'unknown').toLowerCase();
+    const eventLabel = (d.event_type || 'unknown').replace(/_/g, ' ');
+    const action = (d.advice_action || '').toUpperCase();
+    const response = (d.user_response || '').toLowerCase();
+    const grade = (d.outcome_grade || '').toLowerCase();
+
+    // Event type badge class
+    const eventBadgeClass = 'badge badge-event-' + eventType;
+
+    // Action badge
+    const actionLower = action.toLowerCase();
+    const actionBadgeClass = 'badge badge-action-' + (actionLower || 'hold');
+
+    // Response badge
+    let responseBadge = '';
+    if (response && response !== 'no_response_required') {
+      const respLabel = response === 'partially_followed' ? 'PARTIAL' : response.toUpperCase();
+      const respClass = response === 'followed' ? 'badge-followed'
+        : response === 'ignored' ? 'badge-ignored'
+        : response === 'overrode' ? 'badge-overrode'
+        : response === 'partially_followed' ? 'badge-partially'
+        : 'badge-pending';
+      responseBadge = `<span class="badge ${respClass}">${respLabel}</span>`;
+    }
+
+    // Grade badge
+    let gradeBadge = '';
+    if (grade && grade !== 'ungraded') {
+      const gradeLabel = grade === 'partially_correct' ? 'PARTIAL' : grade.toUpperCase();
+      const gradeClass = (grade === 'correct' || grade === 'partially_correct') ? 'badge-correct'
+        : grade === 'wrong' ? 'badge-wrong'
+        : 'badge-neutral';
+      gradeBadge = `<span class="badge ${gradeClass}">${gradeLabel}</span>`;
+    }
+
+    return `<div class="timeline-entry event-${eventType}">
+      <div class="timeline-time">${fmtRelativeTime(d.created_at)}</div>
+      <div class="timeline-content">
+        <div class="timeline-row-top">
+          <span class="${eventBadgeClass}">${eventLabel}</span>
+          <span class="timeline-ticker">${escapeHtml(d.ticker || '--')}</span>
+          ${action ? `<span class="${actionBadgeClass}">${action}</span>` : ''}
+        </div>
+        <div class="timeline-summary">${escapeHtml(d.advice_summary || '')}</div>
+        ${(responseBadge || gradeBadge) ? `<div class="timeline-badges">${responseBadge}${gradeBadge}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAccuracyByEvent() {
+  const body = document.getElementById('accuracyByEventBody');
+  const byType = {};
+
+  allDecisions.forEach(d => {
+    const t = d.event_type || 'unknown';
+    if (!byType[t]) byType[t] = { total: 0, graded: 0, correct: 0 };
+    byType[t].total++;
+    if (d.outcome_grade && d.outcome_grade !== 'ungraded') {
+      byType[t].graded++;
+      if (d.outcome_grade === 'correct' || d.outcome_grade === 'partially_correct') {
+        byType[t].correct++;
+      }
+    }
+  });
+
+  const entries = Object.entries(byType).sort((a, b) => b[1].total - a[1].total);
+
+  if (entries.length === 0) {
+    body.innerHTML = '<tr><td colspan="4" class="empty-state">No data</td></tr>';
+    return;
+  }
+
+  body.innerHTML = entries.map(([type, data]) => {
+    const accPct = data.graded > 0 ? (data.correct / data.graded * 100).toFixed(1) + '%' : '--';
+    const accColor = data.graded > 0
+      ? (data.correct / data.graded >= 0.6 ? 'var(--green)' : data.correct / data.graded >= 0.4 ? 'var(--orange)' : 'var(--red)')
+      : 'var(--text-muted)';
+    return `<tr>
+      <td>${type.replace(/_/g, ' ')}</td>
+      <td>${data.total}</td>
+      <td>${data.graded}</td>
+      <td style="color:${accColor};font-weight:500;">${accPct}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderIgnoredAdvice() {
+  const container = document.getElementById('ignoredAdviceList');
+
+  const ignored = allDecisions.filter(d =>
+    d.user_response === 'ignored' &&
+    d.outcome_grade &&
+    d.outcome_grade !== 'ungraded'
+  );
+
+  if (ignored.length === 0) {
+    container.innerHTML = '<div class="timeline-empty">No ignored advice with known outcomes yet</div>';
+    return;
+  }
+
+  container.innerHTML = ignored.slice(0, 20).map(d => {
+    const gradeColor = d.outcome_grade === 'correct' || d.outcome_grade === 'partially_correct'
+      ? 'var(--green)' : d.outcome_grade === 'wrong' ? 'var(--red)' : 'var(--text-muted)';
+    const outcomeLabel = d.outcome_grade === 'correct' ? 'System was correct'
+      : d.outcome_grade === 'partially_correct' ? 'System was partially correct'
+      : d.outcome_grade === 'wrong' ? 'System was wrong'
+      : 'Neutral outcome';
+    const pnlText = d.outcome_pnl_impact != null ? ` (P&L impact: ${fmtDollar(d.outcome_pnl_impact)})` : '';
+
+    return `<div class="ignored-item">
+      <div class="ignored-item-header">
+        <span class="ignored-item-ticker">${escapeHtml(d.ticker || '--')}</span>
+        <span class="badge badge-event-${(d.event_type || '').toLowerCase()}">${(d.event_type || '').replace(/_/g, ' ')}</span>
+        <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);">${fmtRelativeTime(d.created_at)}</span>
+      </div>
+      <div class="ignored-item-text">Ignored: ${escapeHtml(d.advice_summary || d.advice_action || '--')}</div>
+      <div class="ignored-item-outcome" style="color:${gradeColor};">${outcomeLabel}${pnlText}</div>
+    </div>`;
+  }).join('');
+}
+
 // ===== Auto-Refresh & Timestamp =====
 function updateTimestamp() {
   if (lastFetchTime) {
@@ -2572,7 +3139,8 @@ async function refreshAll() {
     loadPipeline(),
     loadScoring(),
     loadAlerts(),
-    loadTrades()
+    loadTrades(),
+    loadDecisions()
   ]);
   lastFetchTime = Date.now();
   updateTimestamp();
