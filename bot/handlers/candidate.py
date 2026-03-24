@@ -99,9 +99,30 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     # CREATE mode
-    catalyst_type = kwargs.get("catalyst", "PDUFA").upper()
+    # Fuzzy-match catalyst types to valid DB values
+    CATALYST_MAP = {
+        "PDUFA": "PDUFA", "ADCOM": "ADCOM",
+        "PHASE3_READOUT": "PHASE3_READOUT", "PHASE3": "PHASE3_READOUT", "PH3": "PHASE3_READOUT",
+        "PHASE2_READOUT": "PHASE2_READOUT", "PHASE2": "PHASE2_READOUT", "PH2": "PHASE2_READOUT",
+        "PHASE2_DATA": "PHASE2_READOUT", "PHASE1_DATA": "OTHER",
+        "REGEN": "REGEN", "EARNINGS": "EARNINGS", "MACRO": "MACRO", "OTHER": "OTHER",
+    }
+    SOURCE_MAP = {
+        "manual": "manual", "biopharmcatalyst": "biopharmcatalyst", "news": "news", "tip": "tip",
+    }
+    raw_catalyst = kwargs.get("catalyst", "PDUFA").upper().replace(" ", "_")
+    catalyst_type = CATALYST_MAP.get(raw_catalyst, "OTHER")
     catalyst_date_str = kwargs.get("date")
-    source = kwargs.get("source", "manual")
+    raw_source = kwargs.get("source", "manual").lower()
+    # Map any unknown source to the closest match
+    source = SOURCE_MAP.get(raw_source)
+    if not source:
+        if "radar" in raw_source or "newsletter" in raw_source:
+            source = "news"
+        elif "lane" in raw_source:
+            source = raw_source if raw_source.startswith("radar_lane_") else "manual"
+        else:
+            source = "manual"
 
     catalyst_date_val = None
     if catalyst_date_str:
