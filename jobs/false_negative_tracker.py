@@ -77,3 +77,13 @@ async def run() -> None:
     except Exception as exc:
         logger.error("False negative tracker failed: %s", exc, exc_info=True)
         db.log_error_alert("false_negative_tracker", str(exc))
+
+
+def main():
+    """Entry point for GitHub Actions: python -m jobs.false_negative_tracker"""
+    import asyncio
+    asyncio.run(run())
+
+
+if __name__ == "__main__":
+    main()

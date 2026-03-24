@@ -148,7 +148,27 @@ def format_portfolio(positions: list[dict[str, Any]]) -> str:
         weight = (mv / total_value * 100) if total_value > 0 else 0
         pnl_pct = float(p.get("unrealized_pnl_pct") or 0)
         pnl_str = _fmt_pct(pnl_pct)
-        lines.append(f"  {p['ticker']}: ${mv:,.0f} ({weight:.1f}%) P&L: {pnl_str}")
+        line = f"  {p['ticker']}: ${mv:,.0f} ({weight:.1f}%) P&L: {pnl_str}"
+
+        # Show extended hours price if available
+        pre = p.get("pre_market_price")
+        post = p.get("post_market_price")
+        if pre:
+            prev_close = float(p.get("previous_close") or p.get("avg_cost") or 0)
+            if prev_close > 0:
+                ext_chg = ((float(pre) - prev_close) / prev_close) * 100
+                line += f" | 🌙 Pre: ${float(pre):.2f} ({ext_chg:+.1f}%)"
+            else:
+                line += f" | 🌙 Pre: ${float(pre):.2f}"
+        elif post:
+            prev_close = float(p.get("previous_close") or p.get("avg_cost") or 0)
+            if prev_close > 0:
+                ext_chg = ((float(post) - prev_close) / prev_close) * 100
+                line += f" | 🌙 AH: ${float(post):.2f} ({ext_chg:+.1f}%)"
+            else:
+                line += f" | 🌙 AH: ${float(post):.2f}"
+
+        lines.append(line)
 
     # Freshness
     if positions:

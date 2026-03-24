@@ -45,6 +45,8 @@ def get_price_data(ticker: str) -> dict[str, Any]:
             "adv_30d_usd": float | None,
             "market_cap": float | None,
             "name": str | None,
+            "pre_market_price": float | None,
+            "post_market_price": float | None,
             "provenance": str,
         }
     """
@@ -63,6 +65,8 @@ def get_price_data(ticker: str) -> dict[str, Any]:
         "adv_30d_usd": None,
         "market_cap": None,
         "name": None,
+        "pre_market_price": None,
+        "post_market_price": None,
         "provenance": FINANCE("yfinance"),
     }
 
@@ -81,6 +85,14 @@ def get_price_data(ticker: str) -> dict[str, Any]:
         result["market_cap"] = float(info.get("marketCap", 0)) or None
         result["name"] = info.get("shortName") or info.get("longName")
 
+        # Extended hours prices
+        pre_price = info.get("preMarketPrice")
+        post_price = info.get("postMarketPrice")
+        if pre_price:
+            result["pre_market_price"] = float(pre_price)
+        if post_price:
+            result["post_market_price"] = float(post_price)
+
         # Compute derived values
         if result["price"] and result["previous_close"]:
             result["change_pct"] = round(
@@ -94,6 +106,46 @@ def get_price_data(ticker: str) -> dict[str, Any]:
         logger.warning("yfinance error for %s: %s", ticker, exc)
 
     _cache[ticker] = (time.time(), result)
+    return result
+
+
+def get_extended_hours_price(ticker: str) -> dict[str, Any]:
+    """
+    Get the best available price including pre/post market.
+
+    Returns:
+        {
+            "ticker": str,
+            "price": float | None,       # best available (extended or regular)
+            "regular_price": float | None,
+            "pre_market_price": float | None,
+            "post_market_price": float | None,
+            "is_extended_hours": bool,
+            "session": str,              # "pre_market", "post_market", or "regular"
+        }
+    """
+    data = get_price_data(ticker)
+
+    result: dict[str, Any] = {
+        "ticker": ticker.upper(),
+        "price": data.get("price"),
+        "regular_price": data.get("price"),
+        "pre_market_price": data.get("pre_market_price"),
+        "post_market_price": data.get("post_market_price"),
+        "is_extended_hours": False,
+        "session": "regular",
+    }
+
+    # Prefer pre-market price if available (most relevant for PDUFA overnight results)
+    if data.get("pre_market_price"):
+        result["price"] = data["pre_market_price"]
+        result["is_extended_hours"] = True
+        result["session"] = "pre_market"
+    elif data.get("post_market_price"):
+        result["price"] = data["post_market_price"]
+        result["is_extended_hours"] = True
+        result["session"] = "post_market"
+
     return result
 
 

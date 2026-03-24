@@ -113,3 +113,13 @@ def _extract_plan_summary(plan: dict) -> str:
         elif isinstance(val, str):
             parts.append(f"{label}: {val}")
     return " | ".join(parts)
+
+
+def main():
+    """Entry point for GitHub Actions: python -m jobs.catalyst_alerts"""
+    import asyncio
+    asyncio.run(run())
+
+
+if __name__ == "__main__":
+    main()

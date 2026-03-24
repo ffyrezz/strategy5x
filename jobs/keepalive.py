@@ -24,3 +24,13 @@ async def run() -> None:
     else:
         logger.error("Keepalive ping: FAILED")
         db.log_error_alert("keepalive", "Supabase keepalive ping failed")
+
+
+def main():
+    """Entry point for GitHub Actions: python -m jobs.keepalive"""
+    import asyncio
+    asyncio.run(run())
+
+
+if __name__ == "__main__":
+    main()

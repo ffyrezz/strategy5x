@@ -45,3 +45,13 @@ async def run() -> None:
     except Exception as exc:
         logger.error("Position sync failed: %s", exc, exc_info=True)
         db.log_error_alert("position_sync", str(exc))
+
+
+def main():
+    """Entry point for GitHub Actions: python -m jobs.position_sync"""
+    import asyncio
+    asyncio.run(run())
+
+
+if __name__ == "__main__":
+    main()

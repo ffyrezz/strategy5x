@@ -100,3 +100,13 @@ async def run() -> None:
     except Exception as exc:
         logger.error("Morning brief failed: %s", exc, exc_info=True)
         db.log_error_alert("morning_brief", str(exc))
+
+
+def main():
+    """Entry point for GitHub Actions: python -m jobs.morning_brief"""
+    import asyncio
+    asyncio.run(run())
+
+
+if __name__ == "__main__":
+    main()

@@ -154,3 +154,13 @@ async def run() -> None:
         logger.warning("Failed to log canary metric: %s", exc)
 
     logger.info("Canary check: %d issues found", len(issues))
+
+
+def main():
+    """Entry point for GitHub Actions: python -m jobs.canary_check"""
+    import asyncio
+    asyncio.run(run())
+
+
+if __name__ == "__main__":
+    main()
