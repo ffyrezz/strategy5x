@@ -19,6 +19,7 @@ import config
 from bot.handlers import (
     start, status, portfolio, brief, candidate, score, plan,
     concentration, ack, reflect, trade, sync, export, checkpoint,
+    respond,
 )
 
 logging.basicConfig(
@@ -159,6 +160,7 @@ def main() -> None:
     app.add_handler(CommandHandler("trade", trade.handle))
     app.add_handler(CommandHandler("export", export.handle))
     app.add_handler(CommandHandler("checkpoint", checkpoint.handle))
+    app.add_handler(CommandHandler("did", respond.handle))
 
     # Document handler for CSV sync
     app.add_handler(MessageHandler(filters.Document.ALL, sync.handle_document))
