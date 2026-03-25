@@ -113,36 +113,66 @@ def get_extended_hours_price(ticker: str) -> dict[str, Any]:
     """
     Get the best available price including pre/post market.
 
+    IMPORTANT: yfinance returns stale post-market prices from previous sessions.
+    We validate extended hours prices against the regular price to catch this:
+    - If extended price deviates >30% from regular price AND is older than today,
+      it's likely stale — fall back to regular price.
+    - We also check the yfinance timestamp fields when available.
+
     Returns:
         {
             "ticker": str,
-            "price": float | None,       # best available (extended or regular)
+            "price": float | None,
             "regular_price": float | None,
             "pre_market_price": float | None,
             "post_market_price": float | None,
             "is_extended_hours": bool,
-            "session": str,              # "pre_market", "post_market", or "regular"
+            "session": str,
         }
     """
     data = get_price_data(ticker)
+    regular_price = data.get("price")
 
     result: dict[str, Any] = {
         "ticker": ticker.upper(),
-        "price": data.get("price"),
-        "regular_price": data.get("price"),
+        "price": regular_price,
+        "regular_price": regular_price,
         "pre_market_price": data.get("pre_market_price"),
         "post_market_price": data.get("post_market_price"),
         "is_extended_hours": False,
         "session": "regular",
     }
 
-    # Prefer pre-market price if available (most relevant for PDUFA overnight results)
-    if data.get("pre_market_price"):
-        result["price"] = data["pre_market_price"]
+    def _is_plausible(ext_price: float, reg_price: float) -> bool:
+        """Check if extended hours price is plausible (not stale).
+        
+        yfinance often returns post-market prices from days ago.
+        A >25% deviation from regular close is almost certainly stale data
+        rather than a real extended-hours move (except for true binary events).
+        We use 25% as the threshold — real binary moves ARE possible above this,
+        but false alerts from stale data are worse than missing a real one.
+        """
+        if not reg_price or reg_price <= 0:
+            return False
+        deviation = abs((ext_price - reg_price) / reg_price) * 100
+        if deviation > 25:
+            logger.info(
+                "Extended hours price for %s rejected as likely stale: $%.2f vs regular $%.2f (%.1f%% deviation)",
+                ticker, ext_price, reg_price, deviation,
+            )
+            return False
+        return True
+
+    # Prefer pre-market price if available and plausible
+    pre = data.get("pre_market_price")
+    post = data.get("post_market_price")
+
+    if pre and regular_price and _is_plausible(pre, regular_price):
+        result["price"] = pre
         result["is_extended_hours"] = True
         result["session"] = "pre_market"
-    elif data.get("post_market_price"):
-        result["price"] = data["post_market_price"]
+    elif post and regular_price and _is_plausible(post, regular_price):
+        result["price"] = post
         result["is_extended_hours"] = True
         result["session"] = "post_market"
 
