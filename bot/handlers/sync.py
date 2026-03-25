@@ -49,15 +49,29 @@ def _parse_csv_content(content: str) -> list[dict[str, Any]]:
                 continue
 
             qty = float(_get(row, "Quantity", "Qty", "qty").replace(",", ""))
+            # Allow qty=0 rows if they have realized P&L (closed positions like KPTI)
+            # but skip truly empty rows
             if qty <= 0:
-                continue
+                # Check if this row has realized P&L worth capturing
+                has_realized = _get(row, "Realized P/L", "Realized P&L", default="0").replace(",", "").replace("$", "").replace("+", "").replace("-", "")
+                if not has_realized or float(has_realized) == 0:
+                    continue
+                # This is a closed position with realized P&L — still include for tracking
 
             avg_cost = float(_get(row, "Average Cost", "Avg Cost", "avg_cost").replace(",", "").replace("$", ""))
             last_price = float(_get(row, "Current price", "Last Price", "last_price", "Last").replace(",", "").replace("$", "")) or None
             market_value = float(_get(row, "Market Value", "market_value").replace(",", "").replace("$", "")) or None
-            pnl = float(_get(row, "Unrealized P/L", "Unrealized P&L", "unrealized_pnl").replace(",", "").replace("$", "")) or None
+            pnl = float(_get(row, "Unrealized P/L", "Unrealized P&L", "unrealized_pnl").replace(",", "").replace("$", "").replace("+", "")) or None
             pnl_pct_str = _get(row, "% Unrealized P/L", "Unrealized P&L %", "unrealized_pnl_pct").replace(",", "").replace("%", "").replace("+", "")
             pnl_pct = float(pnl_pct_str) if pnl_pct_str else None
+
+            # New P&L fields from Moomoo
+            realized_pnl_str = _get(row, "Realized P/L", "Realized P&L", default="0").replace(",", "").replace("$", "").replace("+", "")
+            realized_pnl = float(realized_pnl_str) if realized_pnl_str else 0
+            total_pnl_str = _get(row, "Total P/L", "Total P&L", default="0").replace(",", "").replace("$", "").replace("+", "")
+            total_pnl = float(total_pnl_str) if total_pnl_str else None
+            today_pnl_str = _get(row, "Today's P/L", "Today P&L", default="0").replace(",", "").replace("$", "").replace("+", "")
+            today_pnl = float(today_pnl_str) if today_pnl_str else 0
 
             name = (row.get("Name") or row.get("name") or "").strip() or None
 
@@ -76,6 +90,9 @@ def _parse_csv_content(content: str) -> list[dict[str, Any]]:
                 "market_value": market_value,
                 "unrealized_pnl": pnl,
                 "unrealized_pnl_pct": pnl_pct,
+                "realized_pnl": realized_pnl,
+                "total_pnl": total_pnl,
+                "today_pnl": today_pnl,
                 "currency": "USD",
                 "status": "open",
                 "source_ref": CSV("moomoo_telegram_sync"),

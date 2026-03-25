@@ -1555,13 +1555,15 @@ tbody tr.clickable-row { cursor: pointer; }
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Today's P&amp;L</div>
-          <div class="kpi-value" style="color:var(--text-muted);">--</div>
-          <div class="kpi-sub" style="margin-top:4px;color:var(--text-muted);">Syncs at market close</div>
+          <div class="kpi-value" id="kpi-today-pnl" style="color:var(--text-muted);">--</div>
+          <div class="kpi-sub" style="margin-top:4px;color:var(--text-muted);" id="kpi-today-pnl-sub">Syncs at market close</div>
         </div>
         <div class="kpi-card" style="cursor:pointer;" onclick="openPnlCalendar()">
           <div class="kpi-label">Unrealized P&amp;L</div>
           <div class="kpi-value" id="kpi-total-pnl">--</div>
           <div class="kpi-delta" id="kpi-total-pnl-pct">--</div>
+          <div class="kpi-sub" style="margin-top:4px;" id="kpi-realized-line"></div>
+          <div class="kpi-sub" style="margin-top:2px;" id="kpi-total-pnl-line"></div>
           <div class="kpi-sub" style="margin-top:4px;color:var(--text-muted);">Click for P/L Calendar</div>
         </div>
         <div class="kpi-card">
@@ -1628,17 +1630,20 @@ tbody tr.clickable-row { cursor: pointer; }
           <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);" id="portfolioCount">--</span>
         </div>
         <div class="table-container">
-          <table>
+          <table id="portfolioTable">
             <thead>
               <tr>
-                <th>Ticker</th>
-                <th style="text-align:right">Qty</th>
-                <th style="text-align:right">Avg Cost</th>
-                <th style="text-align:right">Last Price</th>
-                <th style="text-align:right">Market Value</th>
-                <th style="text-align:right">P&amp;L ($)</th>
-                <th style="text-align:right">P&amp;L (%)</th>
-                <th style="text-align:right">Weight</th>
+                <th class="sortable" data-sort="ticker" onclick="sortPortfolio('ticker')">Ticker <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="quantity" onclick="sortPortfolio('quantity')">Qty <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="avg_cost" onclick="sortPortfolio('avg_cost')">Avg Cost <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="last_price" onclick="sortPortfolio('last_price')">Last Price <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="market_value" onclick="sortPortfolio('market_value')">Market Value <span class="sort-arrow">&#9660;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="today_pnl" onclick="sortPortfolio('today_pnl')">Today's P&amp;L <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="unrealized_pnl" onclick="sortPortfolio('unrealized_pnl')">Unrealized P&amp;L <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="unrealized_pnl_pct" onclick="sortPortfolio('unrealized_pnl_pct')">Unrealized % <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="realized_pnl" onclick="sortPortfolio('realized_pnl')">Realized P&amp;L <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="total_pnl" onclick="sortPortfolio('total_pnl')">Total P&amp;L <span class="sort-arrow">&#9650;</span></th>
+                <th class="sortable" style="text-align:right" data-sort="weight" onclick="sortPortfolio('weight')">Weight <span class="sort-arrow">&#9650;</span></th>
               </tr>
             </thead>
             <tbody id="portfolioBody"></tbody>
@@ -1920,6 +1925,8 @@ let pipelineSortCol = null;
 let pipelineSortAsc = true;
 let scoringSortCol = null;
 let scoringSortAsc = true;
+let portfolioSortCol = 'market_value';
+let portfolioSortAsc = false;
 
 // Current detail panel state
 let currentPanelCandidate = null;
@@ -2121,6 +2128,18 @@ function sortPipeline(col) {
   }
   updateSortArrows('pipelineTable', col, pipelineSortAsc);
   renderPipeline();
+}
+
+// ===== Portfolio Sort =====
+function sortPortfolio(col) {
+  if (portfolioSortCol === col) {
+    portfolioSortAsc = !portfolioSortAsc;
+  } else {
+    portfolioSortCol = col;
+    portfolioSortAsc = true;
+  }
+  updateSortArrows('portfolioTable', col, portfolioSortAsc);
+  renderPortfolio();
 }
 
 function filterPipeline(filter) {
@@ -2626,6 +2645,21 @@ async function loadOverview() {
   pnlPctEl.textContent = fmtPct(totalPnlPct);
   pnlPctEl.className = 'kpi-delta ' + pnlClass(totalPnl);
 
+  // Today's P&L KPI — sum today_pnl across all positions
+  const todayPnl = positions.reduce((sum, p) => sum + (Number(p.today_pnl) || 0), 0);
+  const todayPnlEl = document.getElementById('kpi-today-pnl');
+  todayPnlEl.textContent = fmtDollar(todayPnl);
+  todayPnlEl.className = 'kpi-value ' + pnlClass(todayPnl);
+  todayPnlEl.style.color = '';
+
+  // Realized & Total P&L sub-lines on Unrealized P&L card
+  const totalRealizedPnl = positions.reduce((sum, p) => sum + (Number(p.realized_pnl) || 0), 0);
+  const totalTotalPnl = positions.reduce((sum, p) => sum + (Number(p.total_pnl) || 0), 0);
+  const realizedLineEl = document.getElementById('kpi-realized-line');
+  const totalPnlLineEl = document.getElementById('kpi-total-pnl-line');
+  realizedLineEl.innerHTML = `Realized: <span class="${pnlClass(totalRealizedPnl)}" style="font-family:var(--font-mono);">${fmtDollar(totalRealizedPnl)}</span>`;
+  totalPnlLineEl.innerHTML = `Total: <span class="${pnlClass(totalTotalPnl)}" style="font-family:var(--font-mono);font-weight:600;">${fmtDollar(totalTotalPnl)}</span>`;
+
   // Nearest Catalyst
   const now = new Date();
   const upcoming = candidates
@@ -2797,53 +2831,84 @@ function renderPnlChart(sorted) {
 async function loadPortfolio() {
   const positions = await query('positions', 'status=eq.open&order=market_value.desc.nullslast');
   allPositions = positions;
-  const body = document.getElementById('portfolioBody');
+  renderPortfolio();
+}
 
-  if (positions.length === 0) {
-    body.innerHTML = '<tr><td colspan="8" class="empty-state">No open positions</td></tr>';
+function renderPortfolio() {
+  const body = document.getElementById('portfolioBody');
+  const positions = allPositions;
+
+  if (!positions || positions.length === 0) {
+    body.innerHTML = '<tr><td colspan="11" class="empty-state">No open positions</td></tr>';
     document.getElementById('portfolioCount').textContent = '0 positions';
     return;
   }
 
-  let totalValue = 0, totalCost = 0;
-  const rows = positions.map(p => {
+  // Compute totals for weight calculation
+  let totalMV = 0;
+  const enriched = positions.map(p => {
     const qty = Number(p.quantity) || 0;
     const avgCost = Number(p.avg_cost) || 0;
     const lastPrice = Number(p.last_price) || 0;
     const mv = Number(p.market_value) || (qty * lastPrice);
-    const cost = qty * avgCost;
-    const pnl = mv - cost;
-    const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
-    totalValue += mv;
-    totalCost += cost;
-    return { ...p, qty, avgCost, lastPrice, mv, cost, pnl, pnlPct };
+    const todayPnl = Number(p.today_pnl) || 0;
+    const unrealizedPnl = Number(p.unrealized_pnl) || 0;
+    const unrealizedPnlPct = Number(p.unrealized_pnl_pct) || 0;
+    const realizedPnl = Number(p.realized_pnl) || 0;
+    const totalPnl = Number(p.total_pnl) || 0;
+    totalMV += mv;
+    return { ...p, qty, avgCost: avgCost, lastPrice, market_value: mv, today_pnl: todayPnl, unrealized_pnl: unrealizedPnl, unrealized_pnl_pct: unrealizedPnlPct, realized_pnl: realizedPnl, total_pnl: totalPnl };
   });
 
-  const totalPnl = totalValue - totalCost;
-  const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
+  // Compute weight for each position
+  enriched.forEach(r => {
+    r.weight = totalMV > 0 ? ((r.market_value / totalMV) * 100) : 0;
+  });
 
-  body.innerHTML = rows.map(r => {
-    const weight = totalValue > 0 ? ((r.mv / totalValue) * 100) : 0;
+  // Sort
+  let sorted = enriched;
+  if (portfolioSortCol) {
+    const numericCols = ['quantity', 'avg_cost', 'last_price', 'market_value', 'today_pnl', 'unrealized_pnl', 'unrealized_pnl_pct', 'realized_pnl', 'total_pnl', 'weight'];
+    sorted = genericSort(enriched, portfolioSortCol, portfolioSortAsc, numericCols);
+  }
+
+  // Compute totals for the total row
+  const totMV = enriched.reduce((s, r) => s + r.market_value, 0);
+  const totTodayPnl = enriched.reduce((s, r) => s + r.today_pnl, 0);
+  const totUnrealizedPnl = enriched.reduce((s, r) => s + r.unrealized_pnl, 0);
+  const totRealizedPnl = enriched.reduce((s, r) => s + r.realized_pnl, 0);
+  const totTotalPnl = enriched.reduce((s, r) => s + r.total_pnl, 0);
+
+  body.innerHTML = sorted.map(r => {
     return `<tr class="clickable-row" onclick="openDetailPanel('${escapeHtml(r.ticker)}')">
       <td class="ticker">${r.ticker || '--'}</td>
       <td style="text-align:right">${fmt(r.qty, 0)}</td>
       <td style="text-align:right">${fmtDollar(r.avgCost)}</td>
       <td style="text-align:right">${fmtDollar(r.lastPrice)}</td>
-      <td style="text-align:right">${fmtDollar(r.mv)}</td>
-      <td style="text-align:right" class="${pnlClass(r.pnl)}">${fmtDollar(r.pnl)}</td>
-      <td style="text-align:right" class="${pnlClass(r.pnlPct)}">${fmtPct(r.pnlPct)}</td>
-      <td style="text-align:right">${fmt(weight, 1)}%</td>
+      <td style="text-align:right">${fmtDollar(r.market_value)}</td>
+      <td style="text-align:right" class="${pnlClass(r.today_pnl)}">${fmtDollar(r.today_pnl)}</td>
+      <td style="text-align:right" class="${pnlClass(r.unrealized_pnl)}">${fmtDollar(r.unrealized_pnl)}</td>
+      <td style="text-align:right" class="${pnlClass(r.unrealized_pnl_pct)}">${fmtPct(r.unrealized_pnl_pct)}</td>
+      <td style="text-align:right" class="${pnlClass(r.realized_pnl)}">${fmtDollar(r.realized_pnl)}</td>
+      <td style="text-align:right" class="${pnlClass(r.total_pnl)}">${fmtDollar(r.total_pnl)}</td>
+      <td style="text-align:right">${fmt(r.weight, 1)}%</td>
     </tr>`;
   }).join('') + `<tr class="total-row">
       <td>TOTAL</td>
       <td></td><td></td><td></td>
-      <td style="text-align:right">${fmtDollar(totalValue)}</td>
-      <td style="text-align:right" class="${pnlClass(totalPnl)}">${fmtDollar(totalPnl)}</td>
-      <td style="text-align:right" class="${pnlClass(totalPnlPct)}">${fmtPct(totalPnlPct)}</td>
+      <td style="text-align:right">${fmtDollar(totMV)}</td>
+      <td style="text-align:right" class="${pnlClass(totTodayPnl)}">${fmtDollar(totTodayPnl)}</td>
+      <td style="text-align:right" class="${pnlClass(totUnrealizedPnl)}">${fmtDollar(totUnrealizedPnl)}</td>
+      <td></td>
+      <td style="text-align:right" class="${pnlClass(totRealizedPnl)}">${fmtDollar(totRealizedPnl)}</td>
+      <td style="text-align:right" class="${pnlClass(totTotalPnl)}">${fmtDollar(totTotalPnl)}</td>
       <td style="text-align:right">100.0%</td>
     </tr>`;
 
   document.getElementById('portfolioCount').textContent = positions.length + ' positions';
+
+  // Update sort arrows to reflect default sort
+  updateSortArrows('portfolioTable', portfolioSortCol, portfolioSortAsc);
 }
 
 async function loadPipeline() {
