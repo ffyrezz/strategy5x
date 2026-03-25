@@ -1547,20 +1547,22 @@ tbody tr.clickable-row { cursor: pointer; }
     <div class="page active" id="page-overview">
       <div class="kpi-grid" id="overviewKpis">
         <div class="kpi-card">
-          <div class="kpi-label">Portfolio Value (USD)</div>
+          <div class="kpi-label">Stocks (USD)</div>
           <div class="kpi-value" id="kpi-portfolio-value">--</div>
-          <div class="kpi-sub" style="margin-top:4px;">Cash: $5,501.03</div>
-          <div class="kpi-sub" style="margin-top:2px;color:var(--accent);">Total: $33,464.09 SGD</div>
+          <div class="kpi-sub" style="margin-top:4px;" id="kpi-cash-line">Cash: $6,535.33</div>
+          <div class="kpi-sub" style="margin-top:2px;color:var(--accent);" id="kpi-total-line">Total: --</div>
+          <div class="kpi-sub" style="margin-top:2px;color:var(--text-muted);" id="kpi-position-count-line">-- positions</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Today's P&amp;L</div>
+          <div class="kpi-value" style="color:var(--text-muted);">--</div>
+          <div class="kpi-sub" style="margin-top:4px;color:var(--text-muted);">Syncs at market close</div>
         </div>
         <div class="kpi-card" style="cursor:pointer;" onclick="openPnlCalendar()">
-          <div class="kpi-label">Total P&amp;L</div>
+          <div class="kpi-label">Unrealized P&amp;L</div>
           <div class="kpi-value" id="kpi-total-pnl">--</div>
           <div class="kpi-delta" id="kpi-total-pnl-pct">--</div>
           <div class="kpi-sub" style="margin-top:4px;color:var(--text-muted);">Click for P/L Calendar</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Positions</div>
-          <div class="kpi-value" id="kpi-position-count">--</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Nearest Catalyst</div>
@@ -2610,13 +2612,16 @@ async function loadOverview() {
   const totalPnl = totalValue - totalCost;
   const totalPnlPct = totalCost > 0 ? ((totalPnl / totalCost) * 100) : 0;
 
+  const cashUSD = 6535.33;
+  const totalWithCash = totalValue + cashUSD;
   document.getElementById('kpi-portfolio-value').textContent = fmtDollar(totalValue);
+  document.getElementById('kpi-total-line').textContent = 'Total: ' + fmtDollar(totalWithCash);
+  document.getElementById('kpi-position-count-line').textContent = positions.length + ' positions';
   document.getElementById('kpi-total-pnl').textContent = fmtDollar(totalPnl);
   document.getElementById('kpi-total-pnl').className = 'kpi-value ' + pnlClass(totalPnl);
   const pnlPctEl = document.getElementById('kpi-total-pnl-pct');
   pnlPctEl.textContent = fmtPct(totalPnlPct);
   pnlPctEl.className = 'kpi-delta ' + pnlClass(totalPnl);
-  document.getElementById('kpi-position-count').textContent = positions.length;
 
   // Nearest Catalyst
   const now = new Date();
@@ -3168,19 +3173,19 @@ const PNL_DATA = {
       }
     },
     "2026": {
-      year_pnl_sgd: 1531.09,
-      year_return_pct: 5.60,
+      year_pnl_sgd: 2159.06,
+      year_return_pct: 7.90,
       months: {
         Jan: {pnl: 1774.15, pct: 7.34},
         Feb: {pnl: 1648.08, pct: 5.62},
-        Mar: {pnl: -1878.93, pct: -5.43}
+        Mar: {pnl: -1263.17, pct: -3.65}
       }
     }
   },
   daily_data: {
     "2026-03": {
-      month_pnl_sgd: -1878.93,
-      month_return_pct: -5.43,
+      month_pnl_sgd: -1263.17,
+      month_return_pct: -3.65,
       days: {
         1:{pnl:0.10,pct:0.00},2:{pnl:-307.48,pct:-0.97},3:{pnl:-671.03,pct:-2.13},
         4:{pnl:600.76,pct:1.92},5:{pnl:-702.90,pct:-2.15},6:{pnl:207.77,pct:0.62},
@@ -3189,7 +3194,8 @@ const PNL_DATA = {
         13:{pnl:-263.45,pct:-0.72},14:{pnl:-0.07,pct:0.00},15:{pnl:0.04,pct:0.00},
         16:{pnl:-15.76,pct:-0.04},17:{pnl:-722.77,pct:-2.00},18:{pnl:-380.54,pct:-1.07},
         19:{pnl:-479.29,pct:-1.37},20:{pnl:-539.57,pct:-1.56},21:{pnl:0.04,pct:0.00},
-        22:{pnl:-0.09,pct:0.00},23:{pnl:-500.66,pct:-1.47},24:{pnl:-30.05,pct:-0.09}
+        22:{pnl:-0.09,pct:0.00},23:{pnl:-500.66,pct:-1.47},24:{pnl:-30.05,pct:-0.09},
+        25:{pnl:1110,pct:3.36}
       }
     },
     "2026-02": {
