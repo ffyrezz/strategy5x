@@ -162,18 +162,21 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(f"❌ {ticker} not found — check symbol and retry.")
         return
 
-    # Create candidate
+    # Create candidate — always capture price at decision
+    now = now_utc()
     row = {
         "ticker": ticker,
         "company_name": price_data.get("name"),
         "status": "candidate",
-        "status_history": [{"status": "candidate", "at": now_utc().isoformat(), "by": source}],
+        "status_history": [{"status": "candidate", "at": now.isoformat(), "by": source}],
         "catalyst_type": catalyst_type,
         "catalyst_date": str(catalyst_date_val) if catalyst_date_val else None,
         "catalyst_confidence": "unverified",
         "discovery_source": source,
-        "discovered_at": now_utc().isoformat(),
-        "updated_at": now_utc().isoformat(),
+        "price_at_decision": price_data["price"],
+        "decision_at": now.isoformat(),
+        "discovered_at": now.isoformat(),
+        "updated_at": now.isoformat(),
     }
 
     try:

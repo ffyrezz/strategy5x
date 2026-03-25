@@ -52,6 +52,7 @@ def format_morning_brief(
     missing_plans: list[str],
     missing_scores: list[str],
     pending_acks: int,
+    requalify_due: list[dict[str, Any]] | None = None,
 ) -> str:
     """
     Format the morning brief Telegram message.
@@ -101,6 +102,18 @@ def format_morning_brief(
     else:
         lines.append("⚡ No catalysts this week.")
 
+    # Requalification reminders
+    if requalify_due:
+        lines.append("")
+        lines.append("REQUALIFY DUE:")
+        for rq in requalify_due[:8]:
+            ticker = rq["ticker"]
+            status = rq.get("status", "")
+            trigger = rq.get("requalify_trigger", "review due")
+            price_at_dec = rq.get("price_at_decision")
+            price_note = f" (was ${float(price_at_dec):.2f})" if price_at_dec else ""
+            lines.append(f"  {ticker} [{status}]{price_note}: {trigger[:80]}")
+
     # Action items
     actions = []
     for ticker in missing_plans[:3]:
@@ -109,10 +122,19 @@ def format_morning_brief(
         actions.append(f"Score {ticker} (no recent scoring run)")
     if pending_acks > 0:
         actions.append(f"Acknowledge {pending_acks} pending alert(s)")
+    if requalify_due:
+        for rq in requalify_due[:3]:
+            t = rq["ticker"]
+            if rq.get("status") == "rejected":
+                actions.append(f"FN check {t}: run price comparison vs rejection price")
+            elif rq.get("status") == "watchlist":
+                actions.append(f"Re-score {t}: search for catalyst date updates")
+            elif rq.get("status") == "candidate":
+                actions.append(f"Plan check {t}: confirm /plan exists with 5 branches")
 
     if actions:
         lines.append("")
-        lines.append("📋 ACTION ITEMS:")
+        lines.append("ACTION ITEMS:")
         for i, action in enumerate(actions, 1):
             lines.append(f"{i}. {action}")
 

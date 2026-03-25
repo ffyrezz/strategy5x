@@ -68,13 +68,17 @@ async def run() -> None:
         # 4. Pending acks
         pending = db.get_pending_alerts()
 
-        # 5. Format
+        # 5. Requalification due (next 3 days)
+        requalify_due = db.get_requalify_due(within_days=3)
+
+        # 6. Format
         text = format_morning_brief(
             positions=positions,
             catalysts=catalysts,
             missing_plans=list(set(missing_plans)),
             missing_scores=list(set(missing_scores)),
             pending_acks=len(pending),
+            requalify_due=requalify_due,
         )
 
         # 6. Send

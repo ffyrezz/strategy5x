@@ -1674,7 +1674,7 @@ tbody tr.clickable-row { cursor: pointer; }
                 <th>Source</th>
                 <th>Requalify Trigger</th>
                 <th style="text-align:right">Price @ Decision</th>
-                <th style="text-align:right">Price @ Audit</th>
+                <th>Requalify Date</th>
                 <th>Notes</th>
               </tr>
             </thead>
@@ -2160,12 +2160,13 @@ function renderPipeline() {
     const status = (c.status || '').toLowerCase();
     const badgeClass = status === 'deployed' ? 'badge-deployed' : status === 'rejected' ? 'badge-rejected' : status === 'candidate' ? 'badge-candidate' : 'badge-watchlist';
 
-    // Price at Decision: for rejected use false_negative_price_at_rejection, otherwise find from scoring
+    // Price at Decision: use the dedicated column first, then fallbacks
     let priceAtDecision = '--';
-    if (status === 'rejected' && c.false_negative_price_at_rejection != null) {
+    if (c.price_at_decision != null) {
+      priceAtDecision = fmtDollar(Number(c.price_at_decision));
+    } else if (c.false_negative_price_at_rejection != null) {
       priceAtDecision = fmtDollar(Number(c.false_negative_price_at_rejection));
     } else {
-      // Try to find latest scoring run with input_price for this ticker
       const scoringMatch = allScoringRuns.find(s => s.ticker === c.ticker && s.input_price != null);
       if (scoringMatch) {
         priceAtDecision = fmtDollar(Number(scoringMatch.input_price));
@@ -2183,7 +2184,7 @@ function renderPipeline() {
       <td class="text-col">${c.discovery_source || '--'}</td>
       <td class="text-col cell-truncate">${truncate(c.requalify_trigger, 40)}</td>
       <td style="text-align:right">${priceAtDecision}</td>
-      <td style="text-align:right">--</td>
+      <td>${fmtDate(c.requalify_date)}</td>
       <td class="text-col cell-truncate">${truncate(c.owner_note, 40)}</td>
     </tr>`;
   }).join('');

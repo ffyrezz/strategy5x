@@ -100,6 +100,26 @@ def get_upcoming_catalysts(within_days: int = 30) -> list[dict[str, Any]]:
     return resp.data or []
 
 
+def get_requalify_due(within_days: int = 3) -> list[dict[str, Any]]:
+    """Return pipeline candidates with requalify_date within N days from today."""
+    cutoff = (date.today() + timedelta(days=within_days)).isoformat()
+    today = date.today().isoformat()
+    try:
+        resp = (
+            get_client()
+            .table("pipeline_candidates")
+            .select("id,ticker,status,catalyst_type,catalyst_date,requalify_date,requalify_trigger,price_at_decision,owner_note")
+            .lte("requalify_date", cutoff)
+            .gte("requalify_date", today)
+            .not_.in_("status", ["eliminated", "expired"])
+            .order("requalify_date")
+            .execute()
+        )
+        return resp.data or []
+    except Exception:
+        return []
+
+
 def get_catalysts_at_t_minus(days: list[int]) -> list[dict[str, Any]]:
     """Return candidates whose catalyst_date is exactly T-N days from today."""
     target_dates = [(date.today() + timedelta(days=d)).isoformat() for d in days]
