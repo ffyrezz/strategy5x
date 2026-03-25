@@ -13,6 +13,7 @@ import logging
 import config
 import db
 from data.market_data import get_price_data
+from utils.telegram_sender import send_message as send_telegram
 from utils.timezone import now_utc
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,34 @@ async def run() -> None:
                     logger.info(
                         "False negative flagged: %s moved +%.1f%% since rejection (was $%.2f, now $%.2f)",
                         ticker, move_pct, rejection_price, current,
+                    )
+
+                    # Send Telegram alert
+                    rejection_reason = cand.get("rejection_reason", "unknown")
+                    msg = (
+                        f"FALSE NEGATIVE: {ticker} +{move_pct:.1f}% since rejection\n"
+                        f"Rejected at: ${rejection_price:.2f} | Now: ${current:.2f}\n"
+                        f"Rejection reason: {rejection_reason}\n"
+                        f"Missed gain: ${(current - rejection_price):.2f}/share\n"
+                        f"Review: was this rejection correct or should scoring be recalibrated?"
+                    )
+                    await send_telegram(msg)
+
+                    # Log to decision audit trail
+                    db.log_decision(
+                        event_type="outcome_resolved",
+                        ticker=ticker,
+                        source="score",
+                        advice_summary=f"FALSE NEGATIVE: {ticker} +{move_pct:.1f}% since rejection at ${rejection_price:.2f}. Now ${current:.2f}. Reason: {rejection_reason}",
+                        advice_action="block",
+                        price_at_event=current,
+                        user_response="followed",
+                        advice_detail={
+                            "rejection_price": rejection_price,
+                            "current_price": current,
+                            "move_pct": round(move_pct, 2),
+                            "rejection_reason": rejection_reason,
+                        },
                     )
 
             except Exception as exc:
