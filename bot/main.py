@@ -68,11 +68,14 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
         replace_existing=True,
     )
 
-    # Price movement detection: every 10 min during US market hours
-    # US market = 9:30 AM - 4:00 PM ET = ~9:30 PM - 4:00 AM SGT
+    # Price movement detection: every 10 min covering FULL US session
+    # US pre-market:  4:00 AM - 9:30 AM ET = 08:00 - 13:30 UTC = 4:00 PM - 9:30 PM SGT
+    # US regular:     9:30 AM - 4:00 PM ET = 13:30 - 20:00 UTC = 9:30 PM - 4:00 AM SGT
+    # US post-market: 4:00 PM - 8:00 PM ET = 20:00 - 00:00 UTC = 4:00 AM - 8:00 AM SGT
+    # Combined: 08:00 UTC to 00:00 UTC = hours 0-0,8-23 = just run 8-23,0
     scheduler.add_job(
         price_check.run,
-        CronTrigger(minute="*/10", hour="13-23,0-4", day_of_week="mon-fri"),  # UTC approximation
+        CronTrigger(minute="*/10", hour="8-23,0", day_of_week="mon-fri"),  # UTC: covers pre+regular+post
         id="price_check",
         name="Price Check",
         replace_existing=True,
@@ -114,10 +117,10 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
         replace_existing=True,
     )
 
-    # Profit defense: every hour during US market hours
+    # Profit defense: every hour during FULL US session (pre+regular+post)
     scheduler.add_job(
         profit_defense.run,
-        CronTrigger(minute=30, hour="13-23,0-4", day_of_week="mon-fri"),  # UTC
+        CronTrigger(minute=30, hour="8-23,0", day_of_week="mon-fri"),  # UTC: covers pre-market
         id="profit_defense",
         name="Profit Defense Check",
         replace_existing=True,
@@ -132,12 +135,12 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
         replace_existing=True,
     )
 
-    # Trading halt monitor: every 2 minutes during US market hours + extended
-    # US market = 4:00 AM - 8:00 PM ET = covers pre-market, regular, post-market
-    # In UTC: 9:00 - 24:00 (+ 0:00 - 1:00)
+    # Trading halt monitor: every 2 minutes during FULL US session
+    # Must cover pre-market (4 AM ET = 8 UTC) through post-market (8 PM ET = 0 UTC)
+    # Binary events (PDUFA, Phase 3) often drop in pre-market (4-9:30 AM ET)
     scheduler.add_job(
         halt_monitor.run,
-        CronTrigger(minute="*/2", hour="9-23,0", day_of_week="mon-fri"),  # UTC
+        CronTrigger(minute="*/2", hour="8-23,0", day_of_week="mon-fri"),  # UTC: full session
         id="halt_monitor",
         name="Trading Halt Monitor",
         replace_existing=True,
