@@ -77,6 +77,9 @@ MOOMOO_OPEND_PORT: int = int(os.environ.get("MOOMOO_OPEND_PORT", "11111"))
 MOOMOO_TRADE_ENV: str = os.environ.get("MOOMOO_TRADE_ENV", "REAL")  # REAL or SIMULATE
 MOOMOO_MARKET: str = "US"  # US market only for now
 
+# ── Finnhub API (real-time quotes with timestamps) ─────────────────────────
+FINNHUB_API_KEY: str = os.environ.get("FINNHUB_API_KEY", "")
+
 # ── AI Dissent (feature-flagged) ──────────────────────────────────────────────
 AI_DISSENT_ENABLED: bool = os.environ.get("AI_DISSENT_ENABLED", "false").lower() == "true"
 PERPLEXITY_API_KEY: str = os.environ.get("PERPLEXITY_API_KEY", "")

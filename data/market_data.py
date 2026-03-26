@@ -111,13 +111,11 @@ def get_price_data(ticker: str) -> dict[str, Any]:
 
 def get_extended_hours_price(ticker: str) -> dict[str, Any]:
     """
-    Get the best available price including pre/post market.
+    Get the best available price, preferring Finnhub (timestamped) over yfinance.
 
-    IMPORTANT: yfinance returns stale post-market prices from previous sessions.
-    We validate extended hours prices against the regular price to catch this:
-    - If extended price deviates >30% from regular price AND is older than today,
-      it's likely stale — fall back to regular price.
-    - We also check the yfinance timestamp fields when available.
+    Finnhub's quote reflects the LATEST price including pre/post market
+    and includes a Unix timestamp so we know exactly how fresh it is.
+    Falls back to yfinance regular price if Finnhub is unavailable.
 
     Returns:
         {
@@ -130,53 +128,41 @@ def get_extended_hours_price(ticker: str) -> dict[str, Any]:
             "session": str,
         }
     """
-    data = get_price_data(ticker)
-    regular_price = data.get("price")
+    import config
+    ticker = ticker.upper()
 
-    result: dict[str, Any] = {
-        "ticker": ticker.upper(),
-        "price": regular_price,
-        "regular_price": regular_price,
-        "pre_market_price": data.get("pre_market_price"),
-        "post_market_price": data.get("post_market_price"),
+    # Try Finnhub first (has timestamps, no stale data problem)
+    if config.FINNHUB_API_KEY:
+        try:
+            from data.finnhub_data import get_finnhub_extended_price
+            fh = get_finnhub_extended_price(ticker)
+            if fh.get("price"):
+                return {
+                    "ticker": ticker,
+                    "price": fh["price"],
+                    "regular_price": fh["price"],  # Finnhub 'c' is always latest
+                    "pre_market_price": None,  # Finnhub doesn't split these
+                    "post_market_price": None,
+                    "previous_close": fh.get("previous_close"),
+                    "is_extended_hours": fh.get("session") == "extended",
+                    "session": fh.get("session", "unknown"),
+                    "timestamp": fh.get("timestamp", 0),
+                    "age_minutes": fh.get("age_minutes", 0),
+                }
+        except Exception as exc:
+            logger.warning("Finnhub fallback for %s: %s", ticker, exc)
+
+    # Fallback to yfinance (regular price only — no extended hours trust)
+    data = get_price_data(ticker)
+    return {
+        "ticker": ticker,
+        "price": data.get("price"),
+        "regular_price": data.get("price"),
+        "pre_market_price": None,  # Don't trust yfinance extended hours
+        "post_market_price": None,
         "is_extended_hours": False,
         "session": "regular",
     }
-
-    def _is_plausible(ext_price: float, reg_price: float) -> bool:
-        """Check if extended hours price is plausible (not stale).
-        
-        yfinance often returns post-market prices from days ago.
-        A >25% deviation from regular close is almost certainly stale data
-        rather than a real extended-hours move (except for true binary events).
-        We use 25% as the threshold — real binary moves ARE possible above this,
-        but false alerts from stale data are worse than missing a real one.
-        """
-        if not reg_price or reg_price <= 0:
-            return False
-        deviation = abs((ext_price - reg_price) / reg_price) * 100
-        if deviation > 25:
-            logger.info(
-                "Extended hours price for %s rejected as likely stale: $%.2f vs regular $%.2f (%.1f%% deviation)",
-                ticker, ext_price, reg_price, deviation,
-            )
-            return False
-        return True
-
-    # Prefer pre-market price if available and plausible
-    pre = data.get("pre_market_price")
-    post = data.get("post_market_price")
-
-    if pre and regular_price and _is_plausible(pre, regular_price):
-        result["price"] = pre
-        result["is_extended_hours"] = True
-        result["session"] = "pre_market"
-    elif post and regular_price and _is_plausible(post, regular_price):
-        result["price"] = post
-        result["is_extended_hours"] = True
-        result["session"] = "post_market"
-
-    return result
 
 
 def get_bulk_prices(tickers: list[str]) -> dict[str, dict[str, Any]]:
