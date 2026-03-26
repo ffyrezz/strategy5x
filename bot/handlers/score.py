@@ -36,12 +36,18 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     ticker = args[0].upper()
 
-    # Parse optional qualitative scores: sc2=7 sc3=9 sc4=8
+    # Parse optional qualitative scores and DA overrides
+    # Supports: sc2=7 sc3=9 sc4=8 da="CAUTION" dareason="..."
     manual_scores = {}
+    manual_da = None
+    manual_da_reason = None
+    # Rejoin args for quoted strings, then parse
+    raw_args = " ".join(args[1:])
     for arg in args[1:]:
         if "=" in arg:
             key, val = arg.split("=", 1)
             key = key.lower().strip()
+            val = val.strip().strip('"').strip("'")
             if key in ("sc2", "sc3", "sc4"):
                 try:
                     score = float(val)
@@ -49,6 +55,21 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                         manual_scores[key] = score
                 except ValueError:
                     pass
+            elif key == "da":
+                if val.upper() in ("PROCEED", "CAUTION", "BLOCK"):
+                    manual_da = val.upper()
+            elif key == "dareason":
+                manual_da_reason = val
+
+    # If no manual SC2/SC3/SC4 provided, try to carry forward from existing scoring run
+    existing_run = db.get_latest_scoring_run(ticker)
+    if existing_run and not manual_scores:
+        for axis in ("sc2", "sc3", "sc4"):
+            existing_val = existing_run.get(axis)
+            if existing_val is not None:
+                manual_scores[axis] = float(existing_val)
+        if manual_scores:
+            logger.info("Carrying forward existing qualitative scores for %s: %s", ticker, manual_scores)
 
     # Check candidate exists
     candidate = db.get_candidate(ticker)
@@ -133,10 +154,18 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         scoring_result["da_details"] = da_result
         scoring_result["bear_summary"] = da_result["bear_summary"]
 
+        # Apply manual DA override if provided (from Perplexity DA prompt)
+        if manual_da:
+            scoring_result["da_verdict"] = manual_da
+            if manual_da_reason:
+                scoring_result["da_details"]["manual_override_reason"] = manual_da_reason
+                scoring_result["bear_summary"] = manual_da_reason
+            logger.info("Manual DA override for %s: %s — %s", ticker, manual_da, manual_da_reason or "no reason")
+
         # Update verdict based on DA
-        if da_result["verdict"] == "BLOCK":
+        if scoring_result["da_verdict"] == "BLOCK":
             scoring_result["verdict"] = "block"
-            scoring_result["verdict_reason"] = f"DA BLOCK: {da_result.get('highest_severity_check', 'unknown')}"
+            scoring_result["verdict_reason"] = f"DA BLOCK: {da_result.get('highest_severity_check', manual_da_reason or 'unknown')}"
 
         # AI Dissent (feature-flagged)
         if config.AI_DISSENT_ENABLED and config.PERPLEXITY_API_KEY:
