@@ -47,10 +47,13 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
     """Register all scheduled jobs with APScheduler."""
     from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit, canary_check, profit_defense, weekly_triage, halt_monitor
 
-    # Morning brief: 8:00 AM SGT (0:00 UTC) weekdays
+    # Morning brief: 5:30 AM SGT (21:30 UTC previous day) weekdays
+    # This is ~30 min after US market close (4 PM ET = 4 AM SGT)
+    # So all day's data is final when the brief runs.
+    # Runs Tue-Sat UTC (= Mon-Fri SGT mornings after US close)
     scheduler.add_job(
         morning_brief.run,
-        CronTrigger(hour=0, minute=0, day_of_week="mon-fri"),  # UTC = SGT-8
+        CronTrigger(hour=21, minute=30, day_of_week="mon-fri"),  # 21:30 UTC = 5:30 AM SGT
         id="morning_brief",
         name="Morning Brief",
         replace_existing=True,
