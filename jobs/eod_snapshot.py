@@ -102,6 +102,21 @@ def run() -> None:
             "source": "eod_finnhub",
         })
 
+        # Also update the positions table with the fresh price
+        unr_pct = round((unrealized / cost_basis * 100), 2) if cost_basis > 0 else 0
+        try:
+            db.get_client().table("positions").update({
+                "last_price": close_price,
+                "market_value": mv,
+                "unrealized_pnl": unrealized,
+                "unrealized_pnl_pct": unr_pct,
+                "total_pnl": unrealized + float(pos.get("realized_pnl") or 0),
+                "source_fresh_at": now_utc().isoformat(),
+                "updated_at": now_utc().isoformat(),
+            }).eq("id", pos["id"]).execute()
+        except Exception as exc:
+            logger.warning("Failed to update position %s: %s", ticker, exc)
+
         logger.info(
             "  %s: %s sh @ $%.2f = $%.2f (cost $%.2f, unr $%.2f)",
             ticker, qty, close_price, mv, cost_basis, unrealized,
