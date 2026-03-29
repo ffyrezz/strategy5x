@@ -15,6 +15,7 @@ import hashlib
 import io
 import json
 import logging
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from telegram import Update
@@ -189,7 +190,9 @@ def _parse_orders_csv(content: str) -> list[dict[str, Any]]:
             fill_time = _get(row, "Fill Time", "fill_time") or None
             order_type = _get(row, "Order Type", "order_type") or None
 
-            now = now_utc()
+            # Use actual fill time from CSV when available, fall back to now
+            filled_at_utc = _parse_fill_time(fill_time) or now_utc().isoformat()
+
             trades.append({
                 "ticker": ticker,
                 "side": side,
@@ -202,18 +205,189 @@ def _parse_orders_csv(content: str) -> list[dict[str, Any]]:
                 "order_type": order_type,
                 # Fields for db.insert_trade()
                 "broker_account_id": BROKER_ACCOUNT_ID,
-                "filled_at": now.isoformat(),
+                "filled_at": filled_at_utc,
                 "trade_context": "catalyst_exit" if side == "SELL" else "catalyst_entry",
                 "is_entry": side == "BUY",
                 "source_ref": CSV("moomoo_orders_sync"),
                 "user_confirmed": True,
                 "reflection_completed": False,
-                "created_at": now.isoformat(),
+                "created_at": filled_at_utc,
             })
         except (ValueError, KeyError) as exc:
             logger.warning("Skipping Orders CSV row: %s — %s", row, exc)
 
     return trades
+
+
+def _parse_fill_time(raw: str) -> str | None:
+    """Convert Moomoo fill-time string to ISO-8601 UTC.
+
+    Moomoo format: 'Mar 26, 2026 09:56:38 ET'
+    ET = US Eastern (EDT UTC-4 Mar-Nov, EST UTC-5 Nov-Mar).
+    We use a simple heuristic based on month to pick EDT vs EST.
+    """
+    if not raw or raw.strip() == "--":
+        return None
+    cleaned = raw.replace(" ET", "").strip()
+    try:
+        dt = datetime.strptime(cleaned, "%b %d, %Y %H:%M:%S")
+    except ValueError:
+        return None
+    # EDT (UTC-4) for Mar-Nov, EST (UTC-5) for Nov-Mar
+    month = dt.month
+    offset_hours = 4 if 3 <= month <= 11 else 5
+    utc_dt = dt + timedelta(hours=offset_hours)
+    return utc_dt.replace(tzinfo=timezone.utc).isoformat()
+
+
+def _make_trade_key(ticker: str, side: str, qty: float, price: float, filled_at: str) -> str:
+    """Build a dedup key for a trade.  Uses ticker+side+qty+price+date."""
+    # Truncate filled_at to the second (ignore sub-second) for matching
+    date_part = filled_at[:19] if filled_at else ""
+    return f"{ticker}|{side}|{qty}|{price}|{date_part}"
+
+
+async def _process_history(update: Update, content: str, file_name: str) -> None:
+    """Process a History CSV: diff against existing trades, backfill missing ones.
+
+    History CSVs contain ALL past orders (filled, queued, cancelled, etc.).
+    We only care about filled orders.  For each filled order we check whether
+    an equivalent trade already exists in the DB and skip it if so.
+    """
+    reader = csv.DictReader(io.StringIO(content))
+    parsed = []
+
+    for row in reader:
+        try:
+            def _get(r, *names, default=""):
+                for n in names:
+                    v = r.get(n)
+                    if v is not None and str(v).strip() not in ("", "--"):
+                        return str(v).strip()
+                return default
+
+            status = _get(row, "Status", "status").lower()
+            if status != "filled":
+                continue
+
+            ticker = _get(row, "Symbol", "symbol").upper()
+            if not ticker:
+                continue
+
+            side = _get(row, "Side", "side").upper()
+            if side not in ("BUY", "SELL"):
+                continue
+
+            fill_qty_str = _get(row, "Fill Qty", "fill_qty", default="0").replace(",", "")
+            fill_qty = float(fill_qty_str)
+            if fill_qty <= 0:
+                fill_qty = float(_get(row, "Order Qty", "order_qty", default="0").replace(",", ""))
+            if fill_qty <= 0:
+                continue
+
+            fill_price_str = _get(row, "Fill Price", "fill_price", default="0").replace(",", "").replace("$", "")
+            fill_price = float(fill_price_str)
+            if fill_price <= 0:
+                filled_avg = _get(row, "Filled@Avg Price", "filled_avg_price")
+                if "@" in filled_avg:
+                    parts = filled_avg.split("@")
+                    fill_price = float(parts[1])
+                    if fill_qty <= 0:
+                        fill_qty = float(parts[0])
+            if fill_price <= 0:
+                continue
+
+            fill_amount_str = _get(row, "Fill Amount", "fill_amount", default="0").replace(",", "").replace("$", "")
+            fill_value = float(fill_amount_str) if fill_amount_str else round(fill_qty * fill_price, 2)
+
+            fill_time_raw = _get(row, "Fill Time", "fill_time")
+            filled_at_utc = _parse_fill_time(fill_time_raw)
+            if not filled_at_utc:
+                continue  # Can't place this trade in time — skip
+
+            commission_str = _get(row, "Total", default="0").replace(",", "").replace("$", "")
+            commission = float(commission_str) if commission_str else None
+
+            name = _get(row, "Name", "name") or None
+
+            parsed.append({
+                "ticker": ticker,
+                "side": side,
+                "quantity": fill_qty,
+                "fill_price": fill_price,
+                "fill_value": fill_value,
+                "filled_at": filled_at_utc,
+                "commission": commission,
+                "security_name": name,
+                "fill_time_raw": fill_time_raw,
+            })
+        except (ValueError, KeyError) as exc:
+            logger.warning("Skipping History CSV row: %s — %s", row, exc)
+
+    if not parsed:
+        await update.message.reply_text(f"No filled trades found in {file_name}.")
+        return
+
+    # Fetch all existing trades for dedup
+    existing_trades = db.get_client().table("trades").select(
+        "ticker,side,quantity,fill_price,filled_at"
+    ).execute().data or []
+
+    existing_keys = set()
+    for et in existing_trades:
+        key = _make_trade_key(
+            et["ticker"], et["side"],
+            float(et["quantity"]), float(et["fill_price"]),
+            et.get("filled_at", ""),
+        )
+        existing_keys.add(key)
+
+    # Diff and insert missing
+    new_count = 0
+    dup_count = 0
+    lines = [f"History sync: {len(parsed)} filled trades in {file_name}"]
+
+    for t in parsed:
+        key = _make_trade_key(
+            t["ticker"], t["side"], t["quantity"], t["fill_price"], t["filled_at"]
+        )
+        if key in existing_keys:
+            dup_count += 1
+            continue
+
+        position = db.get_position_by_ticker(t["ticker"])
+
+        trade_row = {
+            "broker_account_id": BROKER_ACCOUNT_ID,
+            "ticker": t["ticker"],
+            "side": t["side"],
+            "quantity": t["quantity"],
+            "fill_price": t["fill_price"],
+            "fill_value": t["fill_value"],
+            "commission": t["commission"],
+            "filled_at": t["filled_at"],
+            "position_id": position.get("id") if position else None,
+            "trade_context": "catalyst_exit" if t["side"] == "SELL" else "catalyst_entry",
+            "is_entry": t["side"] == "BUY",
+            "source_ref": CSV("moomoo_history_sync"),
+            "user_confirmed": True,
+            "reflection_completed": False,
+            "created_at": t["filled_at"],
+        }
+
+        try:
+            db.insert_trade(trade_row)
+            new_count += 1
+            existing_keys.add(key)  # prevent intra-batch dupes
+        except Exception as exc:
+            logger.warning("Failed to insert history trade %s %s: %s", t["side"], t["ticker"], exc)
+            lines.append(f"  Failed: {t['side']} {t['ticker']} — {exc}")
+
+    lines.append(f"New trades imported: {new_count}")
+    lines.append(f"Duplicates skipped: {dup_count}")
+    lines.append(f"Synced at: {now_utc().strftime('%Y-%m-%d %H:%M UTC')}")
+
+    await update.message.reply_text("\n".join(lines))
 
 
 async def _process_orders(update: Update, content: str, file_name: str) -> None:
@@ -343,12 +517,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         csv_type = _detect_csv_type(content, file_name)
 
         if csv_type == "history":
-            await update.message.reply_text(
-                f"Rejected: {file_name}\n\n"
-                "This is a History CSV (all past orders). "
-                "Importing it would re-create every historical trade.\n\n"
-                "Send an Orders CSV (recent fills only) or a Positions CSV instead."
-            )
+            await _process_history(update, content, file_name)
             return
 
         if csv_type == "orders":

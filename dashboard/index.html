@@ -1760,6 +1760,7 @@ tbody tr.clickable-row { cursor: pointer; }
       <div class="card">
         <div class="card-header">
           <span class="card-title">Trade Log</span>
+          <span class="card-subtitle" id="tradesCount" style="margin-left:12px;font-size:12px;color:var(--text-muted);"></span>
         </div>
         <div class="table-container">
           <table>
@@ -1771,9 +1772,9 @@ tbody tr.clickable-row { cursor: pointer; }
                 <th style="text-align:right">Qty</th>
                 <th style="text-align:right">Price</th>
                 <th style="text-align:right">Value</th>
+                <th style="text-align:right">Fees</th>
                 <th style="text-align:right">P&amp;L</th>
-                <th>Plan Adherence</th>
-                <th>Reflection</th>
+                <th>Context</th>
               </tr>
             </thead>
             <tbody id="tradesBody"></tbody>
@@ -2991,7 +2992,7 @@ async function loadAlerts() {
 }
 
 async function loadTrades() {
-  allTrades = await query('trades', 'order=created_at.desc&limit=100');
+  allTrades = await query('trades', 'order=filled_at.desc&limit=200');
   const body = document.getElementById('tradesBody');
 
   if (allTrades.length === 0) {
@@ -2999,23 +3000,31 @@ async function loadTrades() {
     return;
   }
 
+  // Compute totals
+  const totalBuyValue = allTrades.filter(t => (t.side||'').toUpperCase() === 'BUY').reduce((s,t) => s + (Number(t.fill_value) || 0), 0);
+  const totalSellValue = allTrades.filter(t => (t.side||'').toUpperCase() === 'SELL').reduce((s,t) => s + (Number(t.fill_value) || 0), 0);
+  const totalCommission = allTrades.reduce((s,t) => s + (Number(t.commission) || 0), 0);
+  const tradeCountEl = document.getElementById('tradesCount');
+  if (tradeCountEl) tradeCountEl.textContent = `${allTrades.length} trades | Bought: ${fmtDollar(totalBuyValue)} | Sold: ${fmtDollar(totalSellValue)} | Fees: ${fmtDollar(totalCommission)}`;
+
   body.innerHTML = allTrades.map(t => {
     const side = (t.side || '').toUpperCase();
     const rowClass = side === 'BUY' ? 'side-buy' : side === 'SELL' ? 'side-sell' : '';
-    const qty = Number(t.quantity || t.qty) || 0;
-    const price = Number(t.price || t.fill_price) || 0;
-    const value = Number(t.value || t.total_value) || (qty * price);
-    const pnl = t.realized_pnl != null ? Number(t.realized_pnl) : (t.pnl != null ? Number(t.pnl) : null);
+    const qty = Number(t.quantity) || 0;
+    const price = Number(t.fill_price) || 0;
+    const value = Number(t.fill_value) || (qty * price);
+    const commission = Number(t.commission) || 0;
+    const pnl = t.realized_pnl != null ? Number(t.realized_pnl) : null;
     return `<tr class="${rowClass}">
-      <td>${fmtDate(t.trade_date || t.executed_at || t.created_at)}</td>
+      <td>${fmtDate(t.filled_at || t.created_at)}</td>
       <td class="ticker">${t.ticker || '--'}</td>
       <td class="text-col" style="font-weight:600;color:${side === 'BUY' ? 'var(--green)' : side === 'SELL' ? 'var(--red)' : 'var(--text-secondary)'};">${side || '--'}</td>
       <td style="text-align:right">${fmt(qty, 0)}</td>
       <td style="text-align:right">${fmtDollar(price)}</td>
       <td style="text-align:right">${fmtDollar(value)}</td>
+      <td style="text-align:right;font-family:var(--font-mono);font-size:11px;">${commission > 0 ? fmtDollar(commission) : '--'}</td>
       <td style="text-align:right" class="${pnl != null ? pnlClass(pnl) : ''}">${pnl != null ? fmtDollar(pnl) : '--'}</td>
-      <td class="text-col">${t.plan_adherence || '--'}</td>
-      <td class="text-col cell-truncate">${truncate(t.reflection || t.notes, 60)}</td>
+      <td class="text-col cell-truncate">${truncate(t.trade_context || '', 30)}</td>
     </tr>`;
   }).join('');
 }
