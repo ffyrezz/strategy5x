@@ -1,9 +1,12 @@
-"""SGT / UTC conversion helpers."""
+"""SGT / UTC / ET conversion helpers."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 SGT = timezone(timedelta(hours=8))
 UTC = timezone.utc
+# US Eastern: use -4 for EDT (Mar-Nov) and -5 for EST (Nov-Mar)
+# Approximation — sufficient for EOD date determination.
+ET = timezone(timedelta(hours=-4))  # default to EDT
 
 
 def now_utc() -> datetime:
@@ -39,3 +42,13 @@ def is_quiet_hours() -> bool:
     """Return True if current SGT time is between 00:00 and 06:00."""
     hour = now_sgt().hour
     return 0 <= hour < 6
+
+
+def now_et() -> datetime:
+    """Current time in US Eastern."""
+    return datetime.now(ET)
+
+
+def today_et() -> date:
+    """Today's date in US Eastern (the current trading date)."""
+    return now_et().date()

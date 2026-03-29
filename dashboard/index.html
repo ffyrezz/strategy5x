@@ -3275,87 +3275,74 @@ async function refreshAll() {
 }
 
 // ===== P/L Calendar Data & Logic =====
-const PNL_DATA = {
-  monthly_summary: {
-    "2025": {
-      year_pnl_sgd: 1258.05,
-      year_return_pct: 15.58,
-      months: {
-        Jan: {pnl: 0.00, pct: 0.00},
-        Feb: {pnl: 0.00, pct: 0.00},
-        Mar: {pnl: 0.00, pct: 0.00},
-        Apr: {pnl: 52.32, pct: 6.99},
-        May: {pnl: 154.01, pct: 6.67},
-        Jun: {pnl: 439.88, pct: 11.05},
-        Jul: {pnl: 332.96, pct: 5.62},
-        Aug: {pnl: -153.19, pct: -1.81},
-        Sep: {pnl: 357.87, pct: 3.36},
-        Oct: {pnl: 310.13, pct: 2.50},
-        Nov: {pnl: -694.90, pct: -5.16},
-        Dec: {pnl: 458.97, pct: 2.68}
-      }
-    },
-    "2026": {
-      year_pnl_sgd: 2159.06,
-      year_return_pct: 7.90,
-      months: {
-        Jan: {pnl: 1774.15, pct: 7.34},
-        Feb: {pnl: 1648.08, pct: 5.62},
-        Mar: {pnl: -1263.17, pct: -3.65}
-      }
-    }
-  },
-  daily_data: {
-    "2026-03": {
-      month_pnl_sgd: -1263.17,
-      month_return_pct: -3.65,
-      days: {
-        1:{pnl:0.10,pct:0.00},2:{pnl:-307.48,pct:-0.97},3:{pnl:-671.03,pct:-2.13},
-        4:{pnl:600.76,pct:1.92},5:{pnl:-702.90,pct:-2.15},6:{pnl:207.77,pct:0.62},
-        7:{pnl:-0.04,pct:0.00},8:{pnl:-0.03,pct:0.00},9:{pnl:2430,pct:7.03},
-        10:{pnl:344.28,pct:0.93},11:{pnl:9.92,pct:0.03},12:{pnl:-856.64,pct:-2.30},
-        13:{pnl:-263.45,pct:-0.72},14:{pnl:-0.07,pct:0.00},15:{pnl:0.04,pct:0.00},
-        16:{pnl:-15.76,pct:-0.04},17:{pnl:-722.77,pct:-2.00},18:{pnl:-380.54,pct:-1.07},
-        19:{pnl:-479.29,pct:-1.37},20:{pnl:-539.57,pct:-1.56},21:{pnl:0.04,pct:0.00},
-        22:{pnl:-0.09,pct:0.00},23:{pnl:-500.66,pct:-1.47},24:{pnl:-30.05,pct:-0.09},
-        25:{pnl:1110,pct:3.36}
-      }
-    },
-    "2026-02": {
-      month_pnl_sgd: 1648.08,
-      month_return_pct: 5.62,
-      days: {
-        1:{pnl:-0.19,pct:0.00},2:{pnl:403.54,pct:1.46},3:{pnl:-126.83,pct:-0.45},
-        4:{pnl:-1090,pct:-3.90},5:{pnl:-2570,pct:-9.56},6:{pnl:224.54,pct:0.93},
-        7:{pnl:0.03,pct:0.00},8:{pnl:0.10,pct:0.00},9:{pnl:1060,pct:4.11},
-        10:{pnl:1530,pct:5.44},11:{pnl:61.13,pct:0.21},12:{pnl:-146.50,pct:-0.49},
-        13:{pnl:-350.35,pct:-1.19},14:{pnl:0.06,pct:0.00},15:{pnl:-0.04,pct:0.00},
-        16:{pnl:3.74,pct:0.01},17:{pnl:179.78,pct:0.62},18:{pnl:-2030,pct:-6.91},
-        19:{pnl:615.25,pct:2.25},20:{pnl:-275.19,pct:-0.99},21:{pnl:0.05,pct:0.00},
-        22:{pnl:-0.05,pct:0.00},23:{pnl:3720,pct:13.46},24:{pnl:769.43,pct:2.45},
-        25:{pnl:121.78,pct:0.38},26:{pnl:-141.98,pct:-0.44},27:{pnl:-314.30,pct:-0.98},
-        28:{pnl:-0.06,pct:0.00}
-      }
-    },
-    "2026-01": {
-      month_pnl_sgd: 1774.15,
-      month_return_pct: 7.34,
-      days: {
-        1:{pnl:-32.03,pct:-0.15},2:{pnl:358.02,pct:1.65},3:{pnl:0.03,pct:0.00},
-        4:{pnl:0.07,pct:0.00},5:{pnl:779.34,pct:3.54},6:{pnl:1300,pct:5.71},
-        7:{pnl:261.06,pct:1.04},8:{pnl:14.52,pct:0.05},9:{pnl:652.79,pct:2.46},
-        10:{pnl:-0.03,pct:0.00},11:{pnl:0.01,pct:0.00},12:{pnl:-206.58,pct:-0.76},
-        13:{pnl:364.16,pct:1.35},14:{pnl:-91.76,pct:-0.34},15:{pnl:-976.50,pct:-3.58},
-        16:{pnl:-652.21,pct:-2.48},17:{pnl:0.05,pct:0.00},18:{pnl:-0.02,pct:0.00},
-        19:{pnl:-82.19,pct:-0.31},20:{pnl:-179.83,pct:-0.65},21:{pnl:313.06,pct:1.14},
-        22:{pnl:1230,pct:4.45},23:{pnl:-245.48,pct:-0.85},24:{pnl:-0.02,pct:0.00},
-        25:{pnl:-0.04,pct:0.00},26:{pnl:769.15,pct:2.68},27:{pnl:271.52,pct:0.92},
-        28:{pnl:-197.38,pct:-0.66},29:{pnl:-514.60,pct:-1.74},30:{pnl:-1370,pct:-4.71},
-        31:{pnl:-0.08,pct:0.00}
-      }
-    }
+// Live data fetched from portfolio_snapshots via daily_pnl view.
+// No more hardcoded numbers — the EOD snapshot job populates this automatically.
+let PNL_CACHE = {};  // { 'YYYY-MM': { days: {d: {pnl, pct}}, month_pnl, month_pct } }
+
+async function fetchPnlData(year, month) {
+  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+  if (PNL_CACHE[monthKey]) return PNL_CACHE[monthKey];
+
+  try {
+    const rows = await query('daily_pnl', `snap_date=gte.${monthKey}-01&snap_date=lte.${monthKey}-31&order=snap_date.asc`);
+    const days = {};
+    let monthPnl = 0;
+    let firstVal = null, lastVal = null;
+    rows.forEach(r => {
+      const day = parseInt(r.snap_date.split('-')[2], 10);
+      const dpnl = Number(r.daily_pnl) || 0;
+      const dpct = Number(r.daily_pnl_pct) || 0;
+      days[day] = { pnl: dpnl, pct: dpct };
+      monthPnl += dpnl;
+      if (firstVal === null) firstVal = Number(r.prev_portfolio_value || r.total_portfolio_value);
+      lastVal = Number(r.total_portfolio_value);
+    });
+    const monthPct = firstVal && firstVal > 0 ? ((lastVal - firstVal) / firstVal * 100) : 0;
+    const result = { days, month_pnl: Math.round(monthPnl * 100) / 100, month_pct: Math.round(monthPct * 100) / 100 };
+    PNL_CACHE[monthKey] = result;
+    return result;
+  } catch(e) {
+    console.warn('Failed to fetch P/L data for', monthKey, e);
+    return { days: {}, month_pnl: 0, month_pct: 0 };
   }
-};
+}
+
+async function fetchYearPnlSummary(year) {
+  const cacheKey = `year_${year}`;
+  if (PNL_CACHE[cacheKey]) return PNL_CACHE[cacheKey];
+
+  try {
+    const rows = await query('daily_pnl', `snap_date=gte.${year}-01-01&snap_date=lte.${year}-12-31&order=snap_date.asc`);
+    const months = {};
+    let yearPnl = 0;
+    let firstVal = null, lastVal = null;
+    rows.forEach(r => {
+      const m = parseInt(r.snap_date.split('-')[1], 10) - 1;
+      const mn = MONTH_NAMES[m];
+      if (!months[mn]) months[mn] = { pnl: 0, entries: [], first: null, last: null };
+      const dpnl = Number(r.daily_pnl) || 0;
+      months[mn].pnl += dpnl;
+      yearPnl += dpnl;
+      if (months[mn].first === null) months[mn].first = Number(r.prev_portfolio_value || r.total_portfolio_value);
+      months[mn].last = Number(r.total_portfolio_value);
+      if (firstVal === null) firstVal = Number(r.prev_portfolio_value || r.total_portfolio_value);
+      lastVal = Number(r.total_portfolio_value);
+    });
+    // Compute pct for each month
+    const monthsSummary = {};
+    Object.entries(months).forEach(([mn, d]) => {
+      const pct = d.first && d.first > 0 ? ((d.last - d.first) / d.first * 100) : 0;
+      monthsSummary[mn] = { pnl: Math.round(d.pnl * 100) / 100, pct: Math.round(pct * 100) / 100 };
+    });
+    const yearPct = firstVal && firstVal > 0 ? ((lastVal - firstVal) / firstVal * 100) : 0;
+    const result = { months: monthsSummary, year_pnl: Math.round(yearPnl * 100) / 100, year_pct: Math.round(yearPct * 100) / 100 };
+    PNL_CACHE[cacheKey] = result;
+    return result;
+  } catch(e) {
+    console.warn('Failed to fetch year P/L data for', year, e);
+    return { months: {}, year_pnl: 0, year_pct: 0 };
+  }
+}
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DOW_LABELS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
@@ -3398,51 +3385,52 @@ function pnlColorClass(val) {
   return 'pnl-zero';
 }
 
-function openPnlCalendar() {
+async function openPnlCalendar() {
   // Default to current month
   const now = new Date();
   pnlCalYear = now.getFullYear();
   pnlCalMonth = now.getMonth();
   pnlCalView = 'month';
-  renderPnlCalendar();
   document.getElementById('pnlModalOverlay').classList.add('active');
+  await renderPnlCalendar();
 }
 
 function closePnlCalendar() {
   document.getElementById('pnlModalOverlay').classList.remove('active');
 }
 
-function setPnlView(view) {
+async function setPnlView(view) {
   pnlCalView = view;
-  renderPnlCalendar();
+  await renderPnlCalendar();
 }
 
-function pnlCalPrev() {
+async function pnlCalPrev() {
   if (pnlCalView === 'month') {
     pnlCalMonth--;
     if (pnlCalMonth < 0) { pnlCalMonth = 11; pnlCalYear--; }
   } else {
     pnlCalYear--;
   }
-  renderPnlCalendar();
+  await renderPnlCalendar();
 }
 
-function pnlCalNext() {
+async function pnlCalNext() {
   if (pnlCalView === 'month') {
     pnlCalMonth++;
     if (pnlCalMonth > 11) { pnlCalMonth = 0; pnlCalYear++; }
   } else {
     pnlCalYear++;
   }
-  renderPnlCalendar();
+  await renderPnlCalendar();
 }
 
-function renderPnlCalendar() {
+async function renderPnlCalendar() {
   const container = document.getElementById('pnlCalContent');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</div>';
   if (pnlCalView === 'month') {
-    renderMonthView(container);
+    await renderMonthView(container);
   } else {
-    renderYearView(container);
+    await renderYearView(container);
   }
   // Update toggle buttons
   document.querySelectorAll('.pnl-toggle button').forEach(btn => {
@@ -3450,24 +3438,12 @@ function renderPnlCalendar() {
   });
 }
 
-function renderMonthView(container) {
-  const monthKey = `${pnlCalYear}-${String(pnlCalMonth + 1).padStart(2, '0')}`;
-  const monthData = PNL_DATA.daily_data[monthKey];
+async function renderMonthView(container) {
+  const monthData = await fetchPnlData(pnlCalYear, pnlCalMonth);
   const monthName = MONTH_NAMES[pnlCalMonth];
   
-  // Determine P/L summary for this month
-  let monthPnl = 0, monthPct = 0;
-  if (monthData) {
-    monthPnl = monthData.month_pnl_sgd;
-    monthPct = monthData.month_return_pct;
-  } else {
-    // Try from monthly_summary
-    const ys = PNL_DATA.monthly_summary[String(pnlCalYear)];
-    if (ys && ys.months[monthName]) {
-      monthPnl = ys.months[monthName].pnl;
-      monthPct = ys.months[monthName].pct;
-    }
-  }
+  let monthPnl = monthData.month_pnl || 0;
+  let monthPct = monthData.month_pct || 0;
   
   const pnlClass = pnlColorClass(monthPnl);
   
@@ -3479,7 +3455,7 @@ function renderMonthView(container) {
         <button onclick="pnlCalNext()">&rarr;</button>
       </div>
       <div class="pnl-cal-summary">
-        <div class="pnl-cal-summary-item">${monthName} P/L SGD <span class="val ${pnlClass}">${fmtPnlSummary(monthPnl)}</span></div>
+        <div class="pnl-cal-summary-item">${monthName} P/L USD <span class="val ${pnlClass}">${fmtPnlSummary(monthPnl)}</span></div>
         <div class="pnl-cal-summary-item">Return <span class="val ${pnlClass}">${fmtPct(monthPct)}</span></div>
       </div>
     </div>
@@ -3501,7 +3477,7 @@ function renderMonthView(container) {
   
   // Day cells
   for (let d = 1; d <= daysInMonth; d++) {
-    const dayData = monthData && monthData.days[d];
+    const dayData = monthData.days[d];
     if (dayData) {
       const cls = pnlColorClass(dayData.pnl);
       html += `<div class="pnl-cal-cell">
@@ -3529,13 +3505,10 @@ function renderMonthView(container) {
   container.innerHTML = html;
 }
 
-function renderYearView(container) {
-  const yearData = PNL_DATA.monthly_summary[String(pnlCalYear)];
-  let yearPnl = 0, yearPct = 0;
-  if (yearData) {
-    yearPnl = yearData.year_pnl_sgd;
-    yearPct = yearData.year_return_pct;
-  }
+async function renderYearView(container) {
+  const yearData = await fetchYearPnlSummary(pnlCalYear);
+  let yearPnl = yearData.year_pnl || 0;
+  let yearPct = yearData.year_pct || 0;
   
   const pnlClass = pnlColorClass(yearPnl);
   
@@ -3547,14 +3520,14 @@ function renderYearView(container) {
         <button onclick="pnlCalNext()">&rarr;</button>
       </div>
       <div class="pnl-cal-summary">
-        <div class="pnl-cal-summary-item">Year P/L SGD <span class="val ${pnlClass}">${yearPnl !== 0 ? fmtPnlSummary(yearPnl) : '--'}</span></div>
+        <div class="pnl-cal-summary-item">Year P/L USD <span class="val ${pnlClass}">${yearPnl !== 0 ? fmtPnlSummary(yearPnl) : '--'}</span></div>
         <div class="pnl-cal-summary-item">Return <span class="val ${pnlClass}">${yearPnl !== 0 ? fmtPct(yearPct) : '--'}</span></div>
       </div>
     </div>
     <div class="pnl-cal-grid-year">`;
   
   MONTH_NAMES.forEach(mn => {
-    const md = yearData && yearData.months[mn];
+    const md = yearData.months[mn];
     if (md && (md.pnl !== 0 || md.pct !== 0)) {
       const cls = pnlColorClass(md.pnl);
       html += `<div class="pnl-cal-cell-year">

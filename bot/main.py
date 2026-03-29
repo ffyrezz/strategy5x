@@ -45,7 +45,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
     """Register all scheduled jobs with APScheduler."""
-    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit, canary_check, profit_defense, weekly_triage, halt_monitor
+    from jobs import morning_brief, catalyst_alerts, price_check, keepalive, false_negative_tracker, weekly_audit, canary_check, profit_defense, weekly_triage, halt_monitor, eod_snapshot
 
     # Morning brief: 5:30 AM SGT (21:30 UTC previous day) weekdays
     # This is ~30 min after US market close (4 PM ET = 4 AM SGT)
@@ -143,6 +143,17 @@ def setup_scheduled_jobs(scheduler: AsyncIOScheduler) -> None:
         CronTrigger(minute="*/2", hour="8-23,0", day_of_week="mon-fri"),  # UTC: full session
         id="halt_monitor",
         name="Trading Halt Monitor",
+        replace_existing=True,
+    )
+
+    # EOD portfolio snapshot: 21:00 UTC (5 AM SGT) weekdays
+    # ~1 hour after US regular close (4 PM ET = 20:00 UTC)
+    # Captures closing prices for self-calculating P/L calendar.
+    scheduler.add_job(
+        eod_snapshot.run,
+        CronTrigger(hour=21, minute=0, day_of_week="mon-fri"),  # 21:00 UTC = 5 AM SGT
+        id="eod_snapshot",
+        name="EOD Portfolio Snapshot",
         replace_existing=True,
     )
 
