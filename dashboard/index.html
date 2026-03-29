@@ -1549,7 +1549,7 @@ tbody tr.clickable-row { cursor: pointer; }
         <div class="kpi-card">
           <div class="kpi-label">Stocks (USD)</div>
           <div class="kpi-value" id="kpi-portfolio-value">--</div>
-          <div class="kpi-sub" style="margin-top:4px;" id="kpi-cash-line">Cash: $6,535.33</div>
+          <div class="kpi-sub" style="margin-top:4px;" id="kpi-cash-line">Cash: $24.96</div>
           <div class="kpi-sub" style="margin-top:2px;color:var(--accent);" id="kpi-total-line">Total: --</div>
           <div class="kpi-sub" style="margin-top:2px;color:var(--text-muted);" id="kpi-position-count-line">-- positions</div>
         </div>
@@ -2677,9 +2677,10 @@ async function loadOverview() {
   const totalPnl = totalValue - totalCost;
   const totalPnlPct = totalCost > 0 ? ((totalPnl / totalCost) * 100) : 0;
 
-  const cashUSD = 6535.33;
+  const cashUSD = 24.96;
   const totalWithCash = totalValue + cashUSD;
   document.getElementById('kpi-portfolio-value').textContent = fmtDollar(totalValue);
+  document.getElementById('kpi-cash-line').textContent = 'Cash: ' + fmtDollar(cashUSD);
   document.getElementById('kpi-total-line').textContent = 'Total: ' + fmtDollar(totalWithCash);
   document.getElementById('kpi-position-count-line').textContent = positions.length + ' positions';
   document.getElementById('kpi-total-pnl').textContent = fmtDollar(totalPnl);
@@ -2695,9 +2696,11 @@ async function loadOverview() {
   todayPnlEl.className = 'kpi-value ' + pnlClass(todayPnl);
   todayPnlEl.style.color = '';
 
-  // Realized & Total P&L sub-lines on Unrealized P&L card
-  const totalRealizedPnl = positions.reduce((sum, p) => sum + (Number(p.realized_pnl) || 0), 0);
-  const totalTotalPnl = positions.reduce((sum, p) => sum + (Number(p.total_pnl) || 0), 0);
+  // Realized & Total P&L — include closed positions for accurate totals
+  let allPos = [];
+  try { allPos = await query('positions', 'order=ticker.asc'); } catch(e) { allPos = positions; }
+  const totalRealizedPnl = allPos.reduce((sum, p) => sum + (Number(p.realized_pnl) || 0), 0);
+  const totalTotalPnl = allPos.reduce((sum, p) => sum + (Number(p.total_pnl) || 0), 0);
   const realizedLineEl = document.getElementById('kpi-realized-line');
   const totalPnlLineEl = document.getElementById('kpi-total-pnl-line');
   realizedLineEl.innerHTML = `Realized: <span class="${pnlClass(totalRealizedPnl)}" style="font-family:var(--font-mono);">${fmtDollar(totalRealizedPnl)}</span>`;

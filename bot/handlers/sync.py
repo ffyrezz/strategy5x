@@ -105,9 +105,24 @@ def _parse_csv_content(content: str) -> list[dict[str, Any]]:
     return positions
 
 
-def _detect_csv_type(content: str) -> str:
-    """Detect whether CSV is a Positions or Orders export from Moomoo."""
+def _detect_csv_type(content: str, file_name: str = "") -> str:
+    """Detect whether CSV is a Positions, Orders, or History export from Moomoo.
+
+    History CSVs look like Orders but contain ALL historical trades (filled,
+    queued, cancelled).  Importing them as orders would re-create every past
+    trade.  We detect History CSVs via:
+      1. Filename contains 'History'
+      2. Header row contains fee columns ('Platform Fees', 'Settlement Fees')
+    """
     first_line = content.split("\n", 1)[0].lower()
+
+    # --- History CSV guard ---
+    if "history" in file_name.lower():
+        return "history"
+    # History CSVs have fee breakdown columns that Orders CSVs lack
+    if "platform fees" in first_line or "settlement fees" in first_line:
+        return "history"
+
     if "filled@avg price" in first_line or "order price" in first_line or "fill qty" in first_line:
         return "orders"
     if "average cost" in first_line or "unrealized" in first_line or "market value" in first_line:
@@ -218,6 +233,16 @@ async def _process_orders(update: Update, content: str, file_name: str) -> None:
         qty = t["quantity"]
         price = t["fill_price"]
 
+        # Duplicate guard: skip if we already have this exact trade
+        existing = db.get_client().table("trades").select("id").eq(
+            "ticker", ticker
+        ).eq("side", side).eq("quantity", qty).eq(
+            "fill_price", price
+        ).eq("source_ref", CSV("moomoo_orders_sync")).execute()
+        if existing.data:
+            lines.append(f"  Skip (dup) {side} {qty:.0f} {ticker} @ ${price:.4f}")
+            continue
+
         # Check for existing position
         position = db.get_position_by_ticker(ticker)
 
@@ -315,7 +340,17 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         content = file_bytes.decode("utf-8-sig")
 
         # Auto-detect CSV type and route accordingly
-        csv_type = _detect_csv_type(content)
+        csv_type = _detect_csv_type(content, file_name)
+
+        if csv_type == "history":
+            await update.message.reply_text(
+                f"Rejected: {file_name}\n\n"
+                "This is a History CSV (all past orders). "
+                "Importing it would re-create every historical trade.\n\n"
+                "Send an Orders CSV (recent fills only) or a Positions CSV instead."
+            )
+            return
+
         if csv_type == "orders":
             await _process_orders(update, content, file_name)
             return
