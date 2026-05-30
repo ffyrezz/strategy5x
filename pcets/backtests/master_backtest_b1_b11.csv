@@ -1,0 +1,91 @@
+id,batch,regime,ticker,date,tier,sc,catalyst,r_t7,r_t30,hit_stop,note
+E1,B1-3,Bull/Neutral 2025,ALDX,2025-04-08,1,8,1st CRL reproxalap,14.7,17.8,False,OK
+E4,B1-3,Bull/Neutral 2025,VKTX,2025-08-05,1,10,Mixed obesity data,6.2,-39.1,True,STOP_HIT
+N28,B1-3,Bull/Neutral 2025,NTLA,2024-10-02,1,7,NTLA-2002 interim mixed,4.1,-9.7,False,OK
+N30,B1-3,Bull/Neutral 2025,IMVT,2024-10-15,1,7,Batoclimab MG partial,3.5,-7.8,False,OK
+B02,B4,Bear 2021-2024,TVTX,2023-02-14,2,6,FILSPARI CRL mfg-only,7.78,,False,WIN_SC6_SPECIAL
+B03,B4,Bear 2021-2024,TGTX,2022-12-28,1,9,Ublituximab Ph3 sell-news,37.71,,False,WIN_BETA
+B04,B4,Bear 2021-2024,APLS,2023-02-17,1,8,Pegcetacoplan approval sell-news,15.34,,False,WIN_BETA
+B05,B4,Bear 2021-2024,ADMA,2022-06-08,2,7,FDA warning letter resolved,2.33,,False,WIN_SLOW
+B06,B4,Bear 2021-2024,DAWN,2023-03-15,1,8,Tovorafenib Ph2 ORR,-17.94,,False,LOSS_BEAR
+B07,B4,Bear 2021-2024,AGIO,2022-09-13,2,7,Vorasidenib approval path,-10.11,,False,LOSS_BEAR
+C01,B5,Transition 2022-2024,IMVT,2023-09-26,1,8,IMVT-1402 Ph1 home-run,-8.4,,True,GAP_VIOLATION_LOSS
+C02,B5,Transition 2022-2024,KRYS,2023-06-09,1,8,Vyjuvek FDA approval,22.7,,False,WIN
+C03,B5,Transition 2022-2024,MDGL,2023-03-14,1,9,Resmetirom MAESTRO-NASH,26.3,,False,WIN
+C04,B5,Transition 2022-2024,SRPT,2023-06-22,1,7,Elevidys adcom controversy,-8.4,,True,GATE_BLOCK_SC7_BETA3
+C16,B5,Transition 2022-2024,VRTX,2023-11-15,1,9,VX-548 Ph2 DPN positive,0.0,,False,FLAT
+D01,B6,Bull 2025,ARWR,2025-01-13,1,9,Plozasiran FCS FDA approval,13.86,,False,WIN
+D02,B6,Bull 2025,KYMR,2025-02-10,1,8,KT-621 Phase 2 positive,3.83,,False,WIN
+D03,B6,Bull 2025,SRRK,2025-03-04,2,8,RPT193 CRL mfg-only,-6.85,,False,LOSS_MFG_CRL
+D04,B6,Bull 2025,INSM,2025-04-01,1,9,Treprostinil FDA approval,-9.99,,False,LOSS_MACRO
+D05,B6,Bull 2025,ACAD,2025-01-28,2,6,Daybue Q4 beat,3.97,,False,WIN_SC6
+D06,B6,Bull 2025,MNKD,2025-03-17,2,6,Afrezza label expansion,-3.44,,False,LOSS_SC6
+D07,B6,Bull 2025,IOVA,2025-02-25,2,6,Afami-cel Phase 2 data,-29.78,,True,LOSS_STOP_SECONDARY
+D08,B6,Bull 2025,DNLI,2025-04-07,2,7,DNL343 ALS all endpoints,8.19,,False,WIN
+E01,B7,Mixed 2024-2025,HALO,2024-09-11,1,9,Bronchitol FDA approval,-0.25,,False,FLAT_WIN_BETA
+E02,B7,Mixed 2024-2025,RYTM,2024-11-14,1,8,Setmelanotide Ph3 positive,0.25,,False,FLAT
+E03,B7,Mixed 2024-2025,CGON,2024-08-07,1,9,CG-806 Ph1 AML ORR 67%,10.17,,False,WIN
+E04,B7,Mixed 2024-2025,NUVL,2024-10-17,1,8,NVL-655 brain-penetrant EGFR,-9.27,,False,LOSS
+E05,B7,Mixed 2024-2025,ALNY,2024-10-31,1,8,KARDIA Ph3 enrollment complete,4.96,,False,WIN
+E06,B7,Mixed 2024-2025,PTGX,2025-05-08,1,8,Izokibep Ph2 PsA ACR response,3.76,,False,WIN
+E07,B7,Mixed 2024-2025,HALO,2024-12-05,2,7,Bronchitol sell-news dip,-0.06,,False,FLAT
+E08,B7,Mixed 2024-2025,ALNY,2024-09-23,2,6,Zilebesiran KARDIA-3 design,-0.1,,False,FLAT
+E09,B7,Mixed 2024-2025,NUVL,2025-06-02,2,7,NVL-655 Ph2 enrollment complete,-0.35,,False,FLAT
+E10,B7,Mixed 2024-2025,VERV,2025-05-19,2,6,Progressive Care Q1 beat,5.26,,False,WIN_SC6
+E11,B7,Mixed 2024-2025,CGON,2025-01-14,2,7,CG-806 IND clearance,10.08,,False,WIN
+E12,B7,Mixed 2024-2025,PTGX,2024-07-22,2,6,Izokibep Ph1b PsO partial,3.71,,False,WIN_SC6
+F01,B8,Mid-2023 Recovery,SMMT,2023-03-06,1,9,Ivonescimab NSCLC Ph3 initiation,17.99,,False,WIN
+F02,B8,Mid-2023 Recovery,RXRX,2023-04-12,1,8,Recursion CCM Ph2 hit,-6.99,,False,LOSS
+F03,B8,Mid-2023 Recovery,RARE,2023-06-07,1,9,DTX401 Ph3 GSD-1a strong,-6.83,,False,LOSS_SELL_THE_NEWS
+F04,B8,Mid-2023 Recovery,SRPT,2023-06-22,1,9,SRP-9001 DMD AdCom positive,-8.42,,False,LOSS_PRE_RUN
+F05,B8,Mid-2023 Recovery,IMVT,2023-09-05,1,8,Batoclimab Ph2 HMGB1 positive,-2.95,,False,FLAT_LOSS
+F06,B8,Mid-2023 Recovery,FOLD,2023-10-11,1,9,ATB200 Pompe Phase 3 confirmatory,0.28,,False,FLAT
+F07,B8,Mid-2023 Recovery,DNLI,2023-08-03,1,8,DNL310 Hunter Ph2 strong,-10.22,,False,LOSS_PRE_RUN
+F08,B8,Mid-2023 Recovery,ALEC,2023-11-14,1,9,AL002 TREM2 Ph2 Alzheimer,16.74,,False,WIN
+F09,B8,Mid-2023 Recovery,SRPT,2023-06-23,2,7,SRP-9001 sell-news day 2 dip,-1.93,,False,FLAT_LOSS
+F10,B8,Mid-2023 Recovery,RARE,2023-07-18,2,6,Ultragenyx post-approval 30d dip,-5.02,,False,LOSS_SC6
+F11,B8,Mid-2023 Recovery,IMVT,2023-10-03,2,7,Batoclimab Ph3 enrollment,2.92,,False,WIN
+F12,B8,Mid-2023 Recovery,FOLD,2023-12-04,2,6,Amicus post-approval EU filing,11.08,,False,WIN_SC6
+F13,B8,Mid-2023 Recovery,ALEC,2023-12-15,2,7,AL101 PGRN Ph2 interim,-3.99,,False,LOSS
+F14,B8,Mid-2023 Recovery,RXRX,2023-09-19,2,6,RXRX-002 NF2 IND clearance,-7.94,,False,LOSS_SC6
+G01,B9,Gap-fill 2022-2024,AMGN,2022-10-03,1,8,AMG-133 obesity Phase 1b,6.94,,False,WIN
+G02,B9,Gap-fill 2022-2024,ACAD,2022-06-07,1,8,Pimavanserin CRL response,6.79,,False,WIN
+G03,B9,Gap-fill 2022-2024,MGTX,2024-01-17,1,9,MeiraGTx gene therapy resubmission,9.58,,False,WIN
+G04,B9,Gap-fill 2022-2024,VRTX,2023-05-18,1,9,Competitor AGTC fails CF de-risked,-4.17,,False,LOSS
+G05,B9,Gap-fill 2022-2024,IMVT,2023-03-14,2,7,Roivant partnership expansion,-1.64,,False,FLAT_LOSS
+G06,B9,Gap-fill 2022-2024,SNDX,2024-03-12,1,8,Revumenib AdCom 11-2 positive,-4.11,,False,LOSS
+G07,B9,Gap-fill 2022-2024,BIIB,2023-07-06,1,9,Lecanemab Leqembi full approval,-2.31,,False,FLAT_LOSS_MACRO
+G09,B9,Gap-fill 2022-2024,MDGL,2024-03-14,1,9,Rezdiffra MASH approval,1.66,,False,WIN
+G10,B9,Gap-fill 2022-2024,KRYS,2023-05-19,1,9,Beremagene FDA approval RDEB,22.68,,False,WIN
+G11,B9,Gap-fill 2022-2024,RCUS,2023-08-01,1,8,Zimberelimab Ph2 NSCLC PFS benefit,-5.48,,False,LOSS
+G12,B9,Gap-fill 2022-2024,RGNX,2024-09-24,1,9,RGX-314 wet AMD Ph2b strong,-16.59,,False,LOSS_UNRELATED_FEAR
+G13,B9,Gap-fill 2022-2024,REGN,2023-10-19,1,8,Dupilumab Ph3 COPD positive,-3.83,,False,LOSS
+G14,B9,Gap-fill 2022-2024,GILD,2024-07-09,1,8,Lenacapavir PURPOSE 1 100% efficacy,8.49,,False,WIN
+G15,B9,Gap-fill 2022-2024,TPVG,2022-11-08,2,6,Micro-cap post-ER beat,1.81,,False,FLAT_WIN
+G17,B9,Gap-fill 2022-2024,MRNA,2022-10-25,1,8,mRNA-1345 RSV Ph3 interim,8.0,,False,WIN
+G18,B9,Gap-fill 2022-2024,NUVL,2023-11-02,1,8,NVL-655 Phase 1/2 dose escalation,3.25,,False,WIN
+G19,B9,Gap-fill 2022-2024,PTGX,2023-09-28,1,9,Rusfertide Ph3 PV primary endpoint,-3.56,,False,LOSS
+H14,B10,Post-approval Secondary,KRYS,2023-05-19,1,9,Beremagene FDA approval clean,22.68,,False,WIN
+H15,B10,Post-approval Secondary,MDGL,2024-03-14,1,9,Rezdiffra MASH approval clean,1.66,,False,WIN
+H16,B10,Post-approval Secondary,GILD,2024-07-09,1,8,Lenacapavir PURPOSE 1 clean,8.49,,False,WIN
+H17,B10,Post-approval Secondary,NUVL,2023-11-02,1,8,NVL-655 no partner dependency,3.25,,False,WIN
+H18,B10,Post-approval Secondary,PTGX,2023-09-28,1,9,Rusfertide Ph3 Janssen intact,-3.56,,False,LOSS
+H19,B10,Post-approval Secondary,IMVT,2023-03-14,2,7,Batoclimab FcRn Roivant intact,-1.64,,False,FLAT_LOSS
+H20,B10,Post-approval Secondary,SNDX,2024-03-12,1,8,Revumenib AdCom 11-2 rare AML,-4.11,,False,LOSS
+H21,B10,Post-approval Secondary,AMGN,2022-10-03,1,8,AMG-133 obesity no partner,6.94,,False,WIN
+H22,B10,Post-approval Secondary,MRNA,2022-10-25,1,8,mRNA-1345 RSV Phase 3,8.0,,False,WIN
+I01,B11,Adversarial T+7 Challenge,ALKS,2021-10-04,1,8,ALKS-4230 IL-2 data,3.01,,False,WIN
+I02,B11,Adversarial T+7 Challenge,IONS,2022-11-14,1,8,Eplontersen TTR data,-6.34,,False,LOSS
+I03,B11,Adversarial T+7 Challenge,ALNY,2021-03-29,1,8,Vutrisiran HELIOS-A,6.5,,False,WIN
+I04,B11,Adversarial T+7 Challenge,VRTX,2021-11-09,1,8,Trikafta long-term data,-2.97,,False,FLAT_LOSS
+I05,B11,Adversarial T+7 Challenge,BLUE,2022-08-19,1,8,Betibeglogene gene therapy approval,-3.69,,False,LOSS
+I06,B11,Adversarial T+7 Challenge,CRSP,2023-06-23,1,9,Exa-cel Ph3 SCD functional cure,1.34,,False,WIN
+I07,B11,Adversarial T+7 Challenge,MRNA,2022-10-05,1,8,mRNA-1345 RSV Phase 2/3,6.67,,False,WIN
+I08,B11,Adversarial T+7 Challenge,RXRX,2023-11-28,2,7,Recursion AI Nvidia partnership,7.41,,False,WIN
+I09,B11,Adversarial T+7 Challenge,RARE,2023-04-06,1,8,DTX301 OTC Ph2/3 interim,3.46,,False,WIN
+I10,B11,Adversarial T+7 Challenge,MDGL,2023-06-26,1,9,Resmetirom MAESTRO-NASH primary,-6.25,,False,LOSS
+I11,B11,Adversarial T+7 Challenge,KRYS,2023-02-23,1,9,Beremagene Phase 3 data,-1.7,,False,FLAT_LOSS
+I12,B11,Adversarial T+7 Challenge,NKTR,2022-01-10,2,6,NKTR-358 SLE Phase 2a positive,-6.06,,False,LOSS_SC6
+I13,B11,Adversarial T+7 Challenge,RARE,2022-02-10,1,8,DTX301 UCD Phase 2 bear macro,-6.27,,False,LOSS_BEAR_MACRO
+I14,B11,Adversarial T+7 Challenge,ACAD,2022-10-17,1,8,ACP-204 DLB Ph2b bear period,0.44,,False,FLAT_WIN
+I15,B11,Adversarial T+7 Challenge,RCKT,2022-06-17,2,6,Kresladi PDUFA sell-the-news,18.03,,False,WIN_SC6_BETA
